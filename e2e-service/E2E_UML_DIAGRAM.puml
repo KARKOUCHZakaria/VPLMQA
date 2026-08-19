@@ -1,0 +1,444 @@
+@startuml E2E_Test_Microservice_UML
+!theme plain
+skinparam backgroundColor #f0f0f0
+skinparam classBackgroundColor #ffffff
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' Color definitions
+!define CONTROLLER_COLOR #2A0A54
+!define SERVICE_COLOR #0F6E56
+!define REPOSITORY_COLOR #1E3A5F
+!define ENTITY_COLOR #854F0B
+!define ENUM_COLOR #4A5568
+
+' ============================================================================
+' ENUMERATIONS
+' ============================================================================
+package "Enumerations" #ENUM_COLOR {
+  enum FeatureStatus {
+    PENDING
+    RUNNING
+    PASSED
+    FAILED
+  }
+  
+  enum ScenarioStatus {
+    PENDING
+    RUNNING
+    PASSED
+    FAILED
+    IGNORED
+    REFUSED
+  }
+  
+  enum ValidationAction {
+    VALIDATED
+    IGNORED_NOT_IMPORTANT
+    IGNORED_INVALID
+    REFUSED
+  }
+  
+  enum IgnoreReason {
+    VALID_NOT_IMPORTANT
+    INVALID_NOT_IMPORTANT
+  }
+  
+  enum StepKeyword {
+    GIVEN
+    WHEN
+    THEN
+    AND
+    BUT
+  }
+  
+  enum StepStatus {
+    PENDING
+    PASSED
+    FAILED
+    SKIPPED
+  }
+  
+  enum ScreenshotType {
+    BEFORE
+    AFTER
+    DIFF
+  }
+  
+  enum GenerationStatus {
+    PENDING
+    GENERATED
+    FAILED
+  }
+}
+
+' ============================================================================
+' ENTITIES LAYER
+' ============================================================================
+package "Entity Layer" #ENTITY_COLOR {
+  class Feature {
+    - id: Long (PK)
+    - title: String
+    - status: FeatureStatus
+    - totalScenarios: int
+    - passedScenarios: int
+    - createdAt: LocalDateTime
+    + Feature()
+  }
+  
+  class Scenario {
+    - id: Long (PK)
+    - featureId: Long (FK)
+    - name: String
+    - importance: String
+    - gherkinText: String
+    - status: ScenarioStatus
+    - tags: List<String>
+    - validationAction: ValidationAction
+    - createdAt: LocalDateTime
+    + Scenario()
+  }
+  
+  class Step {
+    - id: Long (PK)
+    - scenarioId: Long (FK)
+    - keyword: StepKeyword
+    - name: String
+    - time: float
+    - status: StepStatus
+    - errorMessage: String
+    - order: int
+    + Step()
+  }
+  
+  class TestResult {
+    - id: Long (PK)
+    - scenarioId: Long (FK)
+    - date: Date
+    - validation: boolean
+    - result: String
+    - time: float
+    - passedSteps: int
+    - failedSteps: int
+    - executionId: Long (FK)
+    + TestResult()
+  }
+  
+  class AIAnalysis {
+    - id: Long (PK)
+    - scenarioId: Long (FK)
+    - testResultId: Long (FK)
+    - date: Date
+    - comment: String
+    - confidence: float
+    - recommendation: String
+    - severity: String
+    + AIAnalysis()
+  }
+  
+  class ScreenShot {
+    - id: Long (PK)
+    - stepId: Long (FK)
+    - url: String
+    - type: ScreenshotType
+    - isFailed: boolean
+    - capturedAt: LocalDateTime
+    + ScreenShot()
+  }
+  
+  class GherkinInput {
+    - id: Long (PK)
+    - scenarioId: Long (FK)
+    - featureFileContent: String
+    - uploadedAt: LocalDateTime
+    + GherkinInput()
+  }
+  
+  class TestPlan {
+    - id: Long (PK)
+    - gherkinInputId: Long (FK)
+    - planContent: String
+    - totalCases: int
+    - generatedAt: LocalDateTime
+    + TestPlan()
+  }
+  
+  class PlaywrightTest {
+    - id: Long (PK)
+    - testPlanId: Long (FK)
+    - javaCode: String
+    - className: String
+    - status: GenerationStatus
+    - generatedAt: LocalDateTime
+    + PlaywrightTest()
+  }
+  
+  class TestExecution {
+    - id: Long (PK)
+    - playwrightTestId: Long (FK)
+    - startedAt: LocalDateTime
+    - finishedAt: LocalDateTime
+    - duration: float
+    - containerName: String
+    - exitCode: int
+    + TestExecution()
+  }
+  
+  class ExecutionReport {
+    - id: Long (PK)
+    - executionId: Long (FK)
+    - summary: String
+    - passRate: float
+    - htmlReportUrl: String
+    - pdfReportUrl: String
+    - generatedAt: LocalDateTime
+    + ExecutionReport()
+  }
+}
+
+' ============================================================================
+' REPOSITORY LAYER
+' ============================================================================
+package "Repository Layer (Spring Data JPA)" #REPOSITORY_COLOR {
+  interface JpaRepository<T, ID> {
+    + findById(id: ID): Optional<T>
+    + findAll(): List<T>
+    + findAll(pageable: Pageable): Page<T>
+    + save(entity: T): T
+    + saveAll(entities: List<T>): List<T>
+    + deleteById(id: ID): void
+    + delete(entity: T): void
+    + deleteAll(): void
+    + count(): long
+    + exists(predicate: Example<T>): boolean
+  }
+  
+  interface FeatureRepository extends JpaRepository {
+    + findByStatus(status: FeatureStatus): List<Feature>
+    + findByTotalScenariosGreaterThan(n: int): List<Feature>
+    + countByStatus(status: FeatureStatus): long
+  }
+  
+  interface ScenarioRepository extends JpaRepository {
+    + findByFeatureId(featureId: Long): List<Scenario>
+    + findByStatus(status: ScenarioStatus): List<Scenario>
+    + findByValidationAction(action: ValidationAction): List<Scenario>
+    + findByTagsContaining(tag: String): List<Scenario>
+  }
+  
+  interface StepRepository extends JpaRepository {
+    + findByScenarioId(scenarioId: Long): List<Step>
+    + findByScenarioIdOrderByOrderAsc(scenarioId: Long): List<Step>
+    + findByStatus(status: StepStatus): List<Step>
+  }
+  
+  interface TestResultRepository extends JpaRepository {
+    + findByScenarioId(scenarioId: Long): List<TestResult>
+    + findByExecutionId(executionId: Long): List<TestResult>
+    + findByValidation(validation: boolean): List<TestResult>
+    + findTopByScenarioIdOrderByDateDesc(scenarioId: Long): Optional<TestResult>
+  }
+  
+  interface AIAnalysisRepository extends JpaRepository {
+    + findByScenarioId(scenarioId: Long): List<AIAnalysis>
+    + findByTestResultId(testResultId: Long): Optional<AIAnalysis>
+    + findBySeverity(severity: String): List<AIAnalysis>
+  }
+  
+  interface ScreenShotRepository extends JpaRepository {
+    + findByStepId(stepId: Long): Optional<ScreenShot>
+    + findByIsFailed(isFailed: boolean): List<ScreenShot>
+    + findByType(type: ScreenshotType): List<ScreenShot>
+  }
+  
+  interface GherkinInputRepository extends JpaRepository {
+    + findByScenarioId(scenarioId: Long): Optional<GherkinInput>
+  }
+  
+  interface TestPlanRepository extends JpaRepository {
+    + findByGherkinInputId(inputId: Long): Optional<TestPlan>
+    + findByTotalCasesGreaterThan(n: int): List<TestPlan>
+  }
+  
+  interface PlaywrightTestRepository extends JpaRepository {
+    + findByTestPlanId(planId: Long): List<PlaywrightTest>
+    + findByStatus(status: GenerationStatus): List<PlaywrightTest>
+  }
+  
+  interface TestExecutionRepository extends JpaRepository {
+    + findByPlaywrightTestId(testId: Long): Optional<TestExecution>
+    + findByExitCode(exitCode: int): List<TestExecution>
+    + findByContainerName(name: String): List<TestExecution>
+  }
+  
+  interface ExecutionReportRepository extends JpaRepository {
+    + findByExecutionId(executionId: Long): Optional<ExecutionReport>
+    + findByPassRateGreaterThan(rate: float): List<ExecutionReport>
+  }
+}
+
+' ============================================================================
+' SERVICE LAYER
+' ============================================================================
+package "Service Layer" #SERVICE_COLOR {
+  class FeatureService {
+    - featureRepository: FeatureRepository
+    - scenarioRepository: ScenarioRepository
+    + getAllFeatures(): List<Feature>
+    + getFeatureById(id: Long): Feature
+    + createFeature(feature: Feature): Feature
+    + updateFeatureStatus(id: Long, status: FeatureStatus): Feature
+    + deleteFeature(id: Long): void
+    + getFeatureProgress(id: Long): FeatureProgressDTO
+  }
+  
+  class ScenarioService {
+    - scenarioRepository: ScenarioRepository
+    - stepRepository: StepRepository
+    - testResultRepository: TestResultRepository
+    + getScenariosByFeature(featureId: Long): List<Scenario>
+    + createScenario(scenario: Scenario): Scenario
+    + validateScenario(id: Long, action: ValidationAction): Scenario
+    + ignoreScenario(id: Long, reason: IgnoreReason): Scenario
+    + refuseScenario(id: Long): Scenario
+  }
+  
+  class TestExecutionService {
+    - testExecutionRepository: TestExecutionRepository
+    - playwrightTestRepository: PlaywrightTestRepository
+    - executionReportRepository: ExecutionReportRepository
+    - screenshotRepository: ScreenShotRepository
+    + executeTest(playwrightTestId: Long): TestExecution
+    + getExecutionById(id: Long): TestExecution
+    + getExecutionReport(executionId: Long): ExecutionReport
+    + streamLogs(executionId: Long): Flux<String>
+    + publishKafkaEvent(topic: String, payload: Object): void
+  }
+  
+  class AIAnalysisService {
+    - aiAnalysisRepository: AIAnalysisRepository
+    - testResultRepository: TestResultRepository
+    + analyseResult(testResultId: Long): AIAnalysis
+    + getAnalysisByScenario(scenarioId: Long): List<AIAnalysis>
+    + generateRecommendation(analysisId: Long): String
+  }
+  
+  class AgentPipelineService {
+    - gherkinInputRepository: GherkinInputRepository
+    - testPlanRepository: TestPlanRepository
+    - playwrightTestRepository: PlaywrightTestRepository
+    + runFullPipeline(gherkinInput: GherkinInput): ExecutionReport
+    + runGherkinPlanner(input: GherkinInput): TestPlan
+    + runPlaywrightGenerator(plan: TestPlan): List<PlaywrightTest>
+    + runTestExecutor(tests: List<PlaywrightTest>): TestExecution
+    + runReportAnalyser(execution: TestExecution): ExecutionReport
+  }
+}
+
+' ============================================================================
+' CONTROLLER LAYER
+' ============================================================================
+package "Controller Layer (REST API)" #CONTROLLER_COLOR {
+  class FeatureController {
+    - featureService: FeatureService
+    + getAll(): ResponseEntity<List<Feature>>
+    + getById(id: Long): ResponseEntity<Feature>
+    + create(feature: Feature): ResponseEntity<Feature>
+    + updateStatus(id: Long, status: FeatureStatus): ResponseEntity<Feature>
+    + delete(id: Long): ResponseEntity<Void>
+    {note: GET POST PATCH DELETE /api/v1/features}
+  }
+  
+  class ScenarioController {
+    - scenarioService: ScenarioService
+    + getByFeature(featureId: Long): ResponseEntity<List<Scenario>>
+    + validate(id: Long): ResponseEntity<Scenario>
+    + ignore(id: Long, reason: IgnoreReason): ResponseEntity<Scenario>
+    + refuse(id: Long): ResponseEntity<Scenario>
+    {note: GET POST /api/v1/scenarios}
+  }
+  
+  class TestExecutionController {
+    - testExecutionService: TestExecutionService
+    + execute(playwrightTestId: Long): ResponseEntity<TestExecution>
+    + getById(id: Long): ResponseEntity<TestExecution>
+    + getReport(id: Long): ResponseEntity<ExecutionReport>
+    + streamLogs(id: Long): Flux<String>
+    {note: POST GET /api/v1/executions}
+  }
+  
+  class AgentPipelineController {
+    - agentPipelineService: AgentPipelineService
+    + runPipeline(input: GherkinInput): ResponseEntity<ExecutionReport>
+    + runGherkinOnly(input: GherkinInput): ResponseEntity<TestPlan>
+    + runPlaywrightOnly(planId: Long): ResponseEntity<List<PlaywrightTest>>
+    {note: POST /api/v1/pipeline}
+  }
+}
+
+' ============================================================================
+' RELATIONSHIPS: INHERITANCE
+' ============================================================================
+FeatureRepository --|> JpaRepository
+ScenarioRepository --|> JpaRepository
+StepRepository --|> JpaRepository
+TestResultRepository --|> JpaRepository
+AIAnalysisRepository --|> JpaRepository
+ScreenShotRepository --|> JpaRepository
+GherkinInputRepository --|> JpaRepository
+TestPlanRepository --|> JpaRepository
+PlaywrightTestRepository --|> JpaRepository
+TestExecutionRepository --|> JpaRepository
+ExecutionReportRepository --|> JpaRepository
+
+' ============================================================================
+' RELATIONSHIPS: DEPENDENCY (uses)
+' ============================================================================
+FeatureService ..> FeatureRepository
+FeatureService ..> ScenarioRepository
+ScenarioService ..> ScenarioRepository
+ScenarioService ..> StepRepository
+ScenarioService ..> TestResultRepository
+TestExecutionService ..> TestExecutionRepository
+TestExecutionService ..> PlaywrightTestRepository
+TestExecutionService ..> ExecutionReportRepository
+TestExecutionService ..> ScreenShotRepository
+AIAnalysisService ..> AIAnalysisRepository
+AIAnalysisService ..> TestResultRepository
+AgentPipelineService ..> GherkinInputRepository
+AgentPipelineService ..> TestPlanRepository
+AgentPipelineService ..> PlaywrightTestRepository
+
+FeatureController ..> FeatureService
+ScenarioController ..> ScenarioService
+TestExecutionController ..> TestExecutionService
+AgentPipelineController ..> AgentPipelineService
+
+' ============================================================================
+' RELATIONSHIPS: ENTITY ASSOCIATIONS
+' ============================================================================
+Feature "1" -- "1..*" Scenario : contains
+Scenario "1" -- "1..*" Step : has
+Step "1" -- "0..1" ScreenShot : captures
+Scenario "1" -- "1..*" TestResult : generates
+Scenario "1" -- "1..*" AIAnalysis : analyzed by
+TestResult "1" -- "1" AIAnalysis : linked to
+GherkinInput "1" -- "1" TestPlan : produces
+TestPlan "1" -- "1..*" PlaywrightTest : generates
+PlaywrightTest "1" -- "1" TestExecution : executes
+TestExecution "1" -- "1" ExecutionReport : creates
+
+' Repository to Entity associations
+FeatureRepository --> Feature
+ScenarioRepository --> Scenario
+StepRepository --> Step
+TestResultRepository --> TestResult
+AIAnalysisRepository --> AIAnalysis
+ScreenShotRepository --> ScreenShot
+GherkinInputRepository --> GherkinInput
+TestPlanRepository --> TestPlan
+PlaywrightTestRepository --> PlaywrightTest
+TestExecutionRepository --> TestExecution
+ExecutionReportRepository --> ExecutionReport
+
+@enduml

@@ -1,0 +1,32 @@
+@startuml Authentication_Black_Box_Sequence
+title Authentification - Diagramme de sequence boite noire
+
+actor "Utilisateur" as User
+participant "Interface VPLMQA" as UI
+participant "Systeme VPLMQA" as System
+
+User -> UI : Ouvrir la page Login
+UI -> User : Afficher formulaire\n(email, mot de passe)
+
+User -> UI : Saisir email et mot de passe
+User -> UI : Cliquer sur "Sign In"
+
+UI -> System : Envoyer demande d'authentification
+
+alt Identifiants valides
+  System -> UI : Retourner session utilisateur
+  alt Mot de passe initial
+    UI -> User : Rediriger vers changement de mot de passe
+    User -> UI : Saisir nouveau mot de passe
+    UI -> System : Envoyer nouveau mot de passe
+    System -> UI : Confirmer mise a jour
+    UI -> User : Rediriger vers Dashboard
+  else Mot de passe deja change
+    UI -> User : Rediriger vers Dashboard
+  end
+else Identifiants invalides
+  System -> UI : Retourner erreur d'authentification
+  UI -> User : Afficher message d'erreur
+end
+
+@enduml

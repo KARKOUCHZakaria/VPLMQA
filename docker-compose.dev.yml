@@ -1,0 +1,57 @@
+version: "3.9"
+
+services:
+  gateway:
+    environment:
+      JAVA_OPTS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+    ports: ["5005:5005"]
+
+  auth-service:
+    environment:
+      JAVA_OPTS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5006"
+    ports: ["5006:5006"]
+
+  project-service:
+    environment:
+      JAVA_OPTS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5007"
+    ports: ["5007:5007"]
+
+  member-service:
+    environment:
+      JAVA_OPTS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5008"
+    ports: ["5008:5008"]
+
+  design-service:
+    environment:
+      JAVA_OPTS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5009"
+    ports: ["5009:5009"]
+
+  e2e-service:
+    environment:
+      JAVA_OPTS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5010"
+    ports: ["5010:5010"]
+
+  ticket-service:
+    environment:
+      JAVA_OPTS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5011"
+    ports: ["5011:5011"]
+
+  notification-service:
+    environment:
+      JAVA_OPTS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5012"
+    ports: ["5012:5012"]
+
+  analytics-service:
+    environment:
+      JAVA_OPTS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5013"
+    ports: ["5013:5013"]
+
+  config-service:
+    environment:
+      JAVA_OPTS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5014"
+    ports: ["5014:5014"]
+
+  eureka-server:
+    environment:
+      JAVA_OPTS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5015"
+    ports: ["5015:5015"]

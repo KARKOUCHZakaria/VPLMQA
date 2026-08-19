@@ -1,0 +1,108 @@
+# SIMPLE 1 - Wikipedia page verification
+Feature: Open Wikipedia
+  Scenario: Verify the Wikipedia home page
+    Given I open "https://www.wikipedia.org/"
+    Then I should see the text "Wikipedia"
+
+
+# SIMPLE 2 - Search workflow
+Feature: Wikipedia search
+  Scenario: Search for Morocco
+    Given I open "https://www.wikipedia.org/"
+    When I search for "Morocco"
+    Then I should see the article heading "Morocco"
+
+
+# MEDIUM 1 - Search and content validation
+Feature: Validate a Wikipedia article
+  Scenario: Find information about Casablanca
+    Given I open "https://www.wikipedia.org/"
+    When I search for "Casablanca"
+    Then I should see the article heading "Casablanca"
+    And I should see the text "Morocco"
+
+
+# MEDIUM 2 - Negative search
+Feature: Wikipedia missing article handling
+  Scenario: Search for an unknown article
+    Given I open "https://www.wikipedia.org/"
+    When I search for "VPLMQAUnknownArticle987654"
+    Then I should see search results or a message that the page does not exist
+
+
+# COMPLEX 1 - Multiple scenarios
+Feature: Wikipedia country research
+  Scenario: Research Morocco
+    Given I open "https://www.wikipedia.org/"
+    When I search for "Morocco"
+    Then I should see the article heading "Morocco"
+    And I should see the text "Rabat"
+
+  Scenario: Research France
+    Given I open "https://www.wikipedia.org/"
+    When I search for "France"
+    Then I should see the article heading "France"
+    And I should see the text "Paris"
+
+
+# COMPLEX 2 - Data-driven scenario outline
+Feature: Validate several country articles
+  Scenario Outline: Search for a country and verify its capital
+    Given I open "https://www.wikipedia.org/"
+    When I search for "<country>"
+    Then I should see the article heading "<country>"
+    And I should see the text "<capital>"
+
+    Examples:
+      | country | capital |
+      | Morocco | Rabat   |
+      | France  | Paris   |
+      | Spain   | Madrid  |
+
+
+# COMPLEX 3 - Local VPLMQA login workflow
+Feature: VPLMQA authentication
+  Scenario: Administrator logs in successfully
+    Given I open "http://localhost:3000/login"
+    When I enter "admin@vplmqa.com" in the email field
+    And I enter "admin" in the password field
+    And I click the login button
+    Then I should be redirected to the dashboard
+
+  Scenario: Login is rejected with an invalid password
+    Given I open "http://localhost:3000/login"
+    When I enter "admin@vplmqa.com" in the email field
+    And I enter "wrong-password" in the password field
+    And I click the login button
+    Then I should see an authentication error
+
+
+# COMPLEX 4 - Project and extraction pipeline
+Feature: Start a project extraction pipeline
+  Scenario: Create a project with a mapped Login page
+    Given I am logged in as an administrator
+    And I open the Projects page
+    When I enter "Extraction Test" as the project name
+    And I enter a valid Figma file key
+    And I enter a valid Figma access token
+    And I enter "http://front-end" as the web URL
+    And I add a web page tagged "Login" with path "/login"
+    And I click the create project and start pipeline button
+    Then the project should be created
+    And the Login page extraction should start
+    And the comparison status should eventually become "COMPARISON_READY"
+
+
+# COMPLEX 5 - Design comparison result
+Feature: Review a design comparison
+  Scenario: Inspect the Login page comparison
+    Given a project contains extracted Figma and Web pages tagged "Login"
+    And the comparison pipeline has completed
+    When I open the Design Comparison page
+    And I select the project
+    And I select the mapped page "Login"
+    Then I should see the Figma design PNG
+    And I should see the Web page screenshot
+    And I should see design-token comparison rows
+    And every compared component should have a unique semantic name
+    And every Web component used by E2E should have an ID locator

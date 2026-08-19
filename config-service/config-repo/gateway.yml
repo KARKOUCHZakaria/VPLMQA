@@ -1,0 +1,154 @@
+spring:
+  main:
+    web-application-type: reactive
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/postgres
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: 6379
+      password: ${REDIS_PASSWORD}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+  cloud:
+    gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:3000"
+              - "http://host.docker.internal:3000"
+              - "http://localhost:5173"
+              - "http://127.0.0.1:3000"
+              - "http://127.0.0.1:5173"
+            allowedHeaders: "*"
+            allowedMethods: "*"
+            allowCredentials: true
+      routes:
+        - id: auth-service
+          uri: lb://AUTH-SERVICE
+          predicates: [Path=/api/v1/auth/**]
+          filters:
+            - RewritePath=/api/v1/auth/v3/api-docs, /v3/api-docs
+        - id: project-service
+          uri: lb://PROJECT-SERVICE
+          predicates: [Path=/api/v1/projects/**]
+          filters:
+            - JwtAuthFilter
+            - RewritePath=/api/v1/projects/v3/api-docs, /v3/api-docs
+        - id: member-service
+          uri: lb://MEMBER-SERVICE
+          predicates:
+            - Path=/api/v1/members/**,/api/v1/organizations/**,/api/v1/projects/*/members/**
+          filters:
+            - JwtAuthFilter
+            - RewritePath=/api/v1/members/v3/api-docs, /v3/api-docs
+        - id: design-service-projects
+          uri: lb://DESIGN-SERVICE
+          predicates: [Path=/api/projects/**]
+          filters:
+            - JwtAuthFilter
+        - id: design-service-pages
+          uri: lb://DESIGN-SERVICE
+          predicates: [Path=/api/pages/**]
+          filters:
+            - JwtAuthFilter
+        - id: design-service-web-components
+          uri: lb://DESIGN-SERVICE
+          predicates: [Path=/api/web-components/**]
+          filters:
+            - JwtAuthFilter
+        - id: design-service-components-discovery
+          uri: lb://DESIGN-SERVICE
+          predicates: [Path=/api/v1/components/discovery/**]
+          filters:
+            - JwtAuthFilter
+        - id: design-service-components
+          uri: lb://DESIGN-SERVICE
+          predicates: [Path=/api/v1/components/**]
+          filters:
+            - JwtAuthFilter
+        - id: design-service-token-comparison
+          uri: lb://DESIGN-SERVICE
+          predicates: [Path=/api/v1/design-token-comparison/**]
+          filters:
+            - JwtAuthFilter
+        - id: design-service-api-docs
+          uri: lb://DESIGN-SERVICE
+          predicates: [Path=/api/v1/design/api-docs]
+          filters:
+            - RewritePath=/api/v1/design/api-docs, /api-docs
+        - id: e2e-service
+          uri: lb://E2E-SERVICE
+          predicates:
+            - Path=/api/v1/tests/**,/api/v1/executions/**,/api/v1/scenarios/**,/api/v1/steps/**,/api/v1/features/**,/api/v1/e2e/**,/api/v1/pipeline/**
+          filters:
+            - JwtAuthFilter
+            - RewritePath=/api/v1/e2e/v3/api-docs, /v3/api-docs
+        - id: e2e-gherkin-automation
+          uri: lb://E2E-SERVICE
+          predicates: [Path=/gherkin/e2e/**]
+          filters:
+            - JwtAuthFilter
+        - id: ticket-service
+          uri: lb://TICKET-SERVICE
+          predicates: [Path=/api/v1/tickets/**]
+          filters:
+            - JwtAuthFilter
+            - RewritePath=/api/v1/tickets/v3/api-docs, /v3/api-docs
+        - id: notification-service
+          uri: lb://NOTIFICATION-SERVICE
+          predicates: [Path=/api/v1/notifications/**]
+          filters:
+            - JwtAuthFilter
+            - RewritePath=/api/v1/notifications/v3/api-docs, /v3/api-docs
+        - id: analytics-service
+          uri: lb://ANALYTICS-SERVICE
+          predicates: [Path=/api/v1/analytics/**]
+          filters:
+            - JwtAuthFilter
+            - RewritePath=/api/v1/analytics/v3/api-docs, /v3/api-docs
+        - id: langgraph-agents
+          uri: ${LANGGRAPH_AGENTS_URL:http://langgraph-agents:8090}
+          predicates: [Path=/api/v1/agents/**]
+          filters:
+            - JwtAuthFilter
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URI:http://eureka-server:8761/eureka}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus,mappings
+  tracing:
+    enabled: false
+
+springdoc:
+  swagger-ui:
+    urls:
+      - name: auth-service
+        url: /api/v1/auth/v3/api-docs
+      - name: design-service
+        url: /api/v1/design/api-docs
+      - name: project-service
+        url: /api/v1/projects/v3/api-docs
+      - name: member-service
+        url: /api/v1/members/v3/api-docs
+      - name: ticket-service
+        url: /api/v1/tickets/v3/api-docs
+      - name: notification-service
+        url: /api/v1/notifications/v3/api-docs
+      - name: analytics-service
+        url: /api/v1/analytics/v3/api-docs
+
+logging:
+  structured: true
+
+gateway:
+  public-url: ${GATEWAY_PUBLIC_URL:http://localhost:8080}

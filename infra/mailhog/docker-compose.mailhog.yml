@@ -1,0 +1,12 @@
+services:
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8025"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s

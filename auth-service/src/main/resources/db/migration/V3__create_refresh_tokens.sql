@@ -1,0 +1,8 @@
+CREATE TABLE refresh_tokens (
+    id UUID PRIMARY KEY,
+    token VARCHAR(512) NOT NULL UNIQUE,
+    user_id UUID NOT NULL REFERENCES users(id),
+    expires_at TIMESTAMPTZ NOT NULL,
+    revoked BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

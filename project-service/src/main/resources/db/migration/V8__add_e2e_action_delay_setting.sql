@@ -1,0 +1,2 @@
+ALTER TABLE project_settings
+    ADD COLUMN IF NOT EXISTS action_delay_ms INTEGER NOT NULL DEFAULT 320;

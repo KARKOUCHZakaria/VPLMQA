@@ -1,0 +1,17 @@
+services:
+  config-service:
+    build: .
+    image: vplmqa/config
+    ports: ["8087:8087"]
+    depends_on:
+      eureka-server: { condition: service_healthy }
+      vault: { condition: service_healthy }
+    volumes:
+      - ./config-repo:/app/config-repo
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8087/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    environment:
+      EUREKA_URI: http://eureka-server:8761/eureka

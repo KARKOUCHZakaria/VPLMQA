@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="820" viewBox="0 0 1400 820">
+  <defs>
+    <style>
+      .bg{fill:#fff}.boundary{fill:#fff;stroke:#111;stroke-width:2}.title{font:700 34px Arial,Helvetica,sans-serif;fill:#111}
+      .actor{stroke:#111;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round}.actorText{font:700 17px Arial,Helvetica,sans-serif;fill:#111}
+      .case{fill:#fffdd0;stroke:#111;stroke-width:2}.caseText{font:700 16px Arial,Helvetica,sans-serif;fill:#111}
+      .line{stroke:#111;stroke-width:1.6;fill:none}.dash{stroke:#111;stroke-width:1.5;fill:none;stroke-dasharray:7 6}.label{font:500 13px Arial,Helvetica,sans-serif;fill:#111}
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#111"/></marker>
+  </defs>
+  <rect class="bg" width="1400" height="820"/>
+  <rect x="175" y="34" width="1050" height="735" class="boundary"/>
+  <text x="205" y="78" class="title">QA avec AI</text>
+
+  <g transform="translate(50 330)">
+    <circle cx="0" cy="-48" r="17" class="actor"/>
+    <path d="M0 -31 L0 33 M-34 -5 L34 -5 M0 33 L-28 80 M0 33 L28 80" class="actor"/>
+    <text x="0" y="118" text-anchor="middle" class="actorText">Testeur</text>
+  </g>
+  <g transform="translate(1345 330)">
+    <circle cx="0" cy="-48" r="17" class="actor"/>
+    <path d="M0 -31 L0 33 M-34 -5 L34 -5 M0 33 L-28 80 M0 33 L28 80" class="actor"/>
+    <text x="0" y="118" text-anchor="middle" class="actorText">Agent</text>
+  </g>
+
+  <ellipse cx="450" cy="110" rx="125" ry="32" class="case"/><text x="450" y="116" text-anchor="middle" class="caseText">Consulter dashboard</text>
+  <ellipse cx="410" cy="200" rx="132" ry="32" class="case"/><text x="410" y="196" text-anchor="middle" class="caseText">Configurer projet</text><text x="410" y="216" text-anchor="middle" class="caseText">et pages</text>
+  <ellipse cx="420" cy="292" rx="145" ry="32" class="case"/><text x="420" y="288" text-anchor="middle" class="caseText">Importer ou écrire</text><text x="420" y="308" text-anchor="middle" class="caseText">une feature</text>
+  <ellipse cx="455" cy="385" rx="122" ry="32" class="case"/><text x="455" y="391" text-anchor="middle" class="caseText">Lancer test E2E</text>
+  <ellipse cx="420" cy="478" rx="118" ry="32" class="case"/><text x="420" y="484" text-anchor="middle" class="caseText">Suivre exécution</text>
+  <ellipse cx="495" cy="570" rx="125" ry="32" class="case"/><text x="495" y="576" text-anchor="middle" class="caseText">Valider résultats</text>
+  <ellipse cx="410" cy="663" rx="138" ry="32" class="case"/><text x="410" y="659" text-anchor="middle" class="caseText">Confirmer anomalie</text><text x="410" y="679" text-anchor="middle" class="caseText">ou ignorer</text>
+  <ellipse cx="695" cy="703" rx="150" ry="32" class="case"/><text x="695" y="699" text-anchor="middle" class="caseText">Configurer Azure DevOps</text><text x="695" y="719" text-anchor="middle" class="caseText">et membres</text>
+  <ellipse cx="700" cy="320" rx="120" ry="32" class="case"/><text x="700" y="326" text-anchor="middle" class="caseText">S'authentifier</text>
+
+  <ellipse cx="940" cy="105" rx="145" ry="32" class="case"/><text x="940" y="101" text-anchor="middle" class="caseText">Comprendre composants</text><text x="940" y="121" text-anchor="middle" class="caseText">DOM et page</text>
+  <ellipse cx="880" cy="200" rx="122" ry="32" class="case"/><text x="880" y="206" text-anchor="middle" class="caseText">Générer tests E2E</text>
+  <ellipse cx="940" cy="292" rx="132" ry="32" class="case"/><text x="940" y="288" text-anchor="middle" class="caseText">Exécuter tests</text><text x="940" y="308" text-anchor="middle" class="caseText">avec Playwright</text>
+  <ellipse cx="890" cy="385" rx="142" ry="32" class="case"/><text x="890" y="381" text-anchor="middle" class="caseText">Analyser logs</text><text x="890" y="401" text-anchor="middle" class="caseText">et screenshots</text>
+  <ellipse cx="950" cy="478" rx="123" ry="32" class="case"/><text x="950" y="474" text-anchor="middle" class="caseText">Comparer UI</text><text x="950" y="494" text-anchor="middle" class="caseText">si nécessaire</text>
+  <ellipse cx="900" cy="570" rx="145" ry="32" class="case"/><text x="900" y="566" text-anchor="middle" class="caseText">Produire rapport</text><text x="900" y="586" text-anchor="middle" class="caseText">et recommandations</text>
+  <ellipse cx="940" cy="663" rx="138" ry="32" class="case"/><text x="940" y="659" text-anchor="middle" class="caseText">Générer ticket</text><text x="940" y="679" text-anchor="middle" class="caseText">avec preuves</text>
+  <ellipse cx="945" cy="735" rx="150" ry="32" class="case"/><text x="945" y="731" text-anchor="middle" class="caseText">Synchroniser ticket</text><text x="945" y="751" text-anchor="middle" class="caseText">avec Azure DevOps</text>
+
+  <path d="M84 282 L325 112" class="line"/><path d="M84 300 L278 200" class="line"/><path d="M84 318 L275 292" class="line"/><path d="M84 336 L333 385" class="line"/><path d="M84 354 L302 478" class="line"/><path d="M84 372 L370 570" class="line"/><path d="M84 392 L272 663" class="line"/><path d="M84 410 L545 703" class="line"/>
+  <path d="M1311 280 L1085 105" class="line"/><path d="M1311 300 L1002 200" class="line"/><path d="M1311 320 L1072 292" class="line"/><path d="M1311 340 L1032 385" class="line"/><path d="M1311 360 L1073 478" class="line"/><path d="M1311 380 L1045 570" class="line"/><path d="M1311 400 L1078 663" class="line"/><path d="M1311 420 L1095 735" class="line"/>
+
+  <path d="M565 292 C650 255 770 220 830 206" class="dash" marker-end="url(#arrow)"/><text x="650" y="250" class="label">&lt;&lt;include&gt;&gt;</text>
+  <path d="M577 385 C690 350 810 310 872 298" class="dash" marker-end="url(#arrow)"/><text x="700" y="348" class="label">&lt;&lt;include&gt;&gt;</text>
+  <path d="M880 168 C895 148 910 130 923 124" class="dash" marker-end="url(#arrow)"/><text x="895" y="155" class="label">&lt;&lt;include&gt;&gt;</text>
+  <path d="M940 324 C925 348 908 368 900 354" class="dash" marker-end="url(#arrow)"/><text x="930" y="352" class="label">&lt;&lt;include&gt;&gt;</text>
+  <path d="M890 417 L900 538" class="dash" marker-end="url(#arrow)"/><text x="910" y="480" class="label">&lt;&lt;include&gt;&gt;</text>
+  <path d="M950 510 C940 535 925 552 910 548" class="dash" marker-end="url(#arrow)"/><text x="955" y="540" class="label">&lt;&lt;include&gt;&gt;</text>
+  <path d="M548 663 C670 658 800 660 802 663" class="dash" marker-end="url(#arrow)"/><text x="655" y="646" class="label">&lt;&lt;include&gt;&gt;</text>
+  <path d="M940 695 L945 703" class="dash" marker-end="url(#arrow)"/><text x="955" y="710" class="label">&lt;&lt;extend&gt;&gt;</text>
+  <path d="M575 110 C640 160 680 245 696 288" class="dash" marker-end="url(#arrow)"/><text x="635" y="188" class="label">&lt;&lt;include&gt;&gt;</text>
+  <path d="M542 200 C625 230 675 276 693 288" class="dash" marker-end="url(#arrow)"/><text x="585" y="250" class="label">&lt;&lt;include&gt;&gt;</text>
+  <path d="M577 385 C620 365 665 340 690 330" class="dash" marker-end="url(#arrow)"/><text x="590" y="355" class="label">&lt;&lt;include&gt;&gt;</text>
+</svg>

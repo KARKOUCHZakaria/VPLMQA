@@ -1,0 +1,25 @@
+name: vplmqa
+
+include:
+  - infra/kafka/docker-compose.kafka.yml
+  - infra/postgres/docker-compose.postgres.yml
+  - infra/redis/docker-compose.redis.yml
+  - infra/minio/docker-compose.minio.yml
+  - infra/mailhog/docker-compose.mailhog.yml
+
+  - infra/vault/docker-compose.vault.yml
+  
+  # Services
+  - eureka-server/docker-compose.yml
+  - config-service/docker-compose.yml
+  - gateway/docker-compose.yml
+  - auth-service/docker-compose.yml
+  - project-service/docker-compose.yml
+  - member-service/docker-compose.yml
+  - design-service/docker-compose.yml
+  - ticket-service/docker-compose.yml
+  - notification-service/docker-compose.yml
+  - analytics-service/docker-compose.yml
+  - e2e-service/docker-compose.yml
+  - front-end/docker-compose.yml
+  - langgraph-agents/docker-compose.yml

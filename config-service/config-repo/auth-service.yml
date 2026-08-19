@@ -1,0 +1,33 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/auth_db
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URI:http://eureka-server:8761/eureka}
+
+gateway:
+  public-url: ${GATEWAY_PUBLIC_URL:http://localhost:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus
+  tracing:
+    enabled: false
+
+logging:
+  structured: true
+
+security:
+  jwt:
+    secret: your-256-bit-secret-here-minimum-64-characters-required-for-HS512
+    issuer: vplmqa
+    access-token-ttl-seconds: 3600
+    refresh-token-ttl-seconds: 86400

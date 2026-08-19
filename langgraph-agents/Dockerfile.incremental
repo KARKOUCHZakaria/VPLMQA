@@ -1,0 +1,4 @@
+FROM vplmqa/agents:latest
+WORKDIR /app
+COPY langgraph-agents/ /app/
+COPY ml/*.pkl /app/ml/

@@ -1,0 +1,13 @@
+services:
+  member-service:
+    build: .
+    env_file:
+      - ../.env
+    image: vplmqa/member
+    ports: ["8089:8089"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      kafka: { condition: service_healthy }
+      config-service: { condition: service_healthy }
+
+

@@ -1,0 +1,52 @@
+services:
+  langgraph-agents:
+    build:
+      context: ..
+      dockerfile: langgraph-agents/Dockerfile
+    image: vplmqa/agents
+    ports:
+      - "8090:8090"
+      - "7900:7900"
+    depends_on:
+      kafka: { condition: service_healthy }
+      project-service: { condition: service_healthy }
+      design-service: { condition: service_healthy }
+      vault-init: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8090/health', timeout=3).read()\""]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    environment:
+      LLM_PROVIDER: ${LLM_PROVIDER:-mistral}
+      MISTRAL_MODEL: ${MISTRAL_MODEL:-mistral-small-latest}
+      MISTRAL_VISION_MODEL: ${MISTRAL_VISION_MODEL:-mistral-small-latest}
+      TICKET_REPORT_MODEL: ${TICKET_REPORT_MODEL:-mistral-small-latest}
+      TICKET_REPORT_MODELS: ${TICKET_REPORT_MODELS:-}
+      LLM_MAX_OUTPUT_TOKENS: ${LLM_MAX_OUTPUT_TOKENS:-4096}
+      LLM_TEMPERATURE: ${LLM_TEMPERATURE:-0.1}
+      LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-90}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      GEMINI_ENRICHMENT_MODEL: ${GEMINI_ENRICHMENT_MODEL:-gemini-2.5-flash}
+      GEMINI_MAX_OUTPUT_TOKENS: ${GEMINI_MAX_OUTPUT_TOKENS:-4096}
+      GEMINI_TEMPERATURE: ${GEMINI_TEMPERATURE:-0.2}
+      GEMINI_MIN_CALL_INTERVAL_SECONDS: ${GEMINI_MIN_CALL_INTERVAL_SECONDS:-1}
+      E2E_BROWSER_CDP_URL: ${E2E_BROWSER_CDP_URL:-http://192.168.65.254:9222}
+      E2E_BROWSER_CDP_REQUIRED: ${E2E_BROWSER_CDP_REQUIRED:-true}
+      E2E_BROWSER_LAUNCHER_URL: ${E2E_BROWSER_LAUNCHER_URL:-http://host.docker.internal:9223/launch}
+      E2E_BROWSER_CLOSE_URL: ${E2E_BROWSER_CLOSE_URL:-http://host.docker.internal:9223/close}
+      E2E_BROWSER_LAUNCH_WAIT_SECONDS: ${E2E_BROWSER_LAUNCH_WAIT_SECONDS:-2}
+      E2E_BROWSER_HEADLESS: "false"
+      E2E_BROWSER_SLOW_MO_MS: "1200"
+      E2E_BROWSER_HOLD_OPEN_SECONDS: ${E2E_BROWSER_HOLD_OPEN_SECONDS:-4}
+      STEP_REGISTRY_DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/tests_db
+      RAG_DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/tests_db
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN_FILE: /run/secrets/vault_token
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      STEP_FUNCTION_BUCKET: e2e-artifacts
+    secrets:
+      - vault_token

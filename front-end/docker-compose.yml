@@ -1,0 +1,7 @@
+services:
+  front-end:
+    build: .
+    image: vplmqa/front-end
+    ports: ["3000:80"]
+    depends_on:
+      gateway: { condition: service_healthy }

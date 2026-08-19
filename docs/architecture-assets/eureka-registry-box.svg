@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="220" viewBox="0 0 560 220">
+  <rect width="560" height="220" fill="#ffffff"/>
+  <rect x="18" y="18" width="524" height="184" rx="18" fill="#f8fbff" stroke="#bfdbfe" stroke-width="4"/>
+  <circle cx="100" cy="110" r="44" fill="#65a532"/>
+  <text x="100" y="126" text-anchor="middle" font-family="Arial, sans-serif" font-size="58" font-weight="900" fill="#ffffff">S</text>
+  <text x="325" y="89" text-anchor="middle" font-family="Arial, sans-serif" font-size="31" font-weight="850" fill="#111827">Spring Boot Registry</text>
+  <text x="325" y="124" text-anchor="middle" font-family="Arial, sans-serif" font-size="21" font-weight="750" fill="#475569">Eureka Server</text>
+  <text x="325" y="154" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#64748b">service discovery - port 8761</text>
+</svg>

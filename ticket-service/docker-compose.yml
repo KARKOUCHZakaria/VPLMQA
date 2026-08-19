@@ -1,0 +1,20 @@
+services:
+  ticket-service:
+    build: .
+    env_file:
+      - ../.env
+    image: vplmqa/ticket
+    ports: ["8084:8084"]
+    depends_on:
+      config-service: { condition: service_healthy }
+      postgres: { condition: service_healthy }
+      kafka: { condition: service_healthy }
+      vault: { condition: service_healthy }
+    environment:
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN_FILE: /run/secrets/vault_token
+    secrets:
+      - vault_token
+
+
+

@@ -28,10 +28,13 @@ build/
 
 # Java / Maven
 target/
+maven-target/
 *.class
 *.jar
 *.war
 *.ear
+maven/
+apache-maven-*.zip
 
 # Logs and temporary runtime output
 *.log
@@ -57,18 +60,40 @@ secrets/
 *.mp4
 video*_contact_sheet.png
 tmp-*.png
+gateway-tree.txt
+
+# Local tool/generated folders
+.docker-cli-config/
+.git_corrupted_backup_*/
+.github/
+notebooks/
+rapport_pfe_tex/
+**/.git_backup_*/
 
 # Local test/debug files kept out of the first clean Git history
 TestClient.*
 TestKey.*
-test-*.py
-test_*.py
-test-*.js
-test.ps1
-test-endpoints.ps1
-dump_schemas.py
-patch_apps.py
-seed_dbs.py
+/test-*.py
+/test_*.py
+/test-*.js
+/test.ps1
+/test-endpoints.ps1
+/dump_schemas.py
+/patch_apps.py
+/seed_dbs.py
+**/temp_test.py
+langgraph-agents/test_part2_agents.py
+langgraph-agents/test_playwright_agent_only.py
+langgraph-agents/example_usage_part1.py
+langgraph-agents/part2_EndToEnd/test_mock.py
+auth-service/src/test/java/TestBcrypt.java
+auth-service/src/test/java/com/vplmqa/auth/BcryptTest.java
+update_hash.sql
+
+# One-off generated design/cleanup notes
+design-service/CLEANUP_*.md
+design-service/STRUCTURE_OPTIMIZATION.md
+front-end/src/imports/
 
 # Extracted or temporary report/source documents
 Rapport_PFE_IIR*.txt

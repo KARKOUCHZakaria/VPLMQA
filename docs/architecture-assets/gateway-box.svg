@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="210" viewBox="0 0 520 210">
+  <rect width="520" height="210" fill="#ffffff"/>
+  <rect x="18" y="18" width="484" height="174" rx="18" fill="#f8fbff" stroke="#bfdbfe" stroke-width="4"/>
+  <circle cx="92" cy="105" r="42" fill="#65a532"/>
+  <text x="92" y="121" text-anchor="middle" font-family="Arial, sans-serif" font-size="56" font-weight="900" fill="#ffffff">S</text>
+  <text x="300" y="84" text-anchor="middle" font-family="Arial, sans-serif" font-size="27" font-weight="850" fill="#111827">Spring Boot</text>
+  <text x="300" y="116" text-anchor="middle" font-family="Arial, sans-serif" font-size="27" font-weight="850" fill="#111827">Gateway</text>
+  <text x="300" y="149" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#64748b">Port: 8080</text>
+</svg>

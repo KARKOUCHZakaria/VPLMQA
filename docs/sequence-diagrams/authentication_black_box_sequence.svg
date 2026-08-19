@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1380" height="880" viewBox="0 0 1380 880">
+  <defs>
+    <style>
+      .bg{fill:#fff}
+      .title{font:700 30px Arial,Helvetica,sans-serif;fill:#111827}
+      .box{fill:#fffdd0;stroke:#111;stroke-width:2;rx:8}
+      .actor{stroke:#111;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round}
+      .label{font:700 16px Arial,Helvetica,sans-serif;fill:#111}
+      .msg{font:500 14px Arial,Helvetica,sans-serif;fill:#111}
+      .note{font:600 14px Arial,Helvetica,sans-serif;fill:#374151}
+      .life{stroke:#6b7280;stroke-width:2;stroke-dasharray:8 8}
+      .arrow{stroke:#111;stroke-width:2;fill:none;marker-end:url(#arrow)}
+      .return{stroke:#111;stroke-width:2;fill:none;stroke-dasharray:7 5;marker-end:url(#arrow)}
+      .alt{fill:#f8fafc;stroke:#94a3b8;stroke-width:2;rx:8}
+      .altTitle{fill:#e9d5ff;stroke:#7c3aed;stroke-width:1.5;rx:5}
+      .altText{font:700 14px Arial,Helvetica,sans-serif;fill:#4c1d95}
+      .sep{stroke:#94a3b8;stroke-width:1.6;stroke-dasharray:6 5}
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#111"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" width="1380" height="880"/>
+  <text x="690" y="48" text-anchor="middle" class="title">Authentification - Diagramme de séquence boîte noire</text>
+
+  <!-- Participants -->
+  <g transform="translate(170 92)">
+    <circle cx="0" cy="18" r="16" class="actor"/>
+    <path d="M0 34 L0 82 M-30 52 L30 52 M0 82 L-26 122 M0 82 L26 122" class="actor"/>
+    <text x="0" y="152" text-anchor="middle" class="label">Utilisateur</text>
+  </g>
+  <rect x="515" y="110" width="170" height="54" class="box"/>
+  <text x="600" y="132" text-anchor="middle" class="label">Interface</text>
+  <text x="600" y="152" text-anchor="middle" class="label">VPLMQA</text>
+
+  <rect x="990" y="110" width="185" height="54" class="box"/>
+  <text x="1082" y="132" text-anchor="middle" class="label">Système</text>
+  <text x="1082" y="152" text-anchor="middle" class="label">VPLMQA</text>
+
+  <!-- Lifelines -->
+  <line x1="170" y1="252" x2="170" y2="820" class="life"/>
+  <line x1="600" y1="164" x2="600" y2="820" class="life"/>
+  <line x1="1082" y1="164" x2="1082" y2="820" class="life"/>
+
+  <!-- Main sequence -->
+  <path d="M170 230 L600 230" class="arrow"/>
+  <text x="385" y="218" text-anchor="middle" class="msg">Ouvrir la page Login</text>
+
+  <path d="M600 275 L170 275" class="return"/>
+  <text x="385" y="263" text-anchor="middle" class="msg">Afficher formulaire : email et mot de passe</text>
+
+  <path d="M170 320 L600 320" class="arrow"/>
+  <text x="385" y="308" text-anchor="middle" class="msg">Saisir email et mot de passe</text>
+
+  <path d="M170 365 L600 365" class="arrow"/>
+  <text x="385" y="353" text-anchor="middle" class="msg">Cliquer sur "Sign In"</text>
+
+  <path d="M600 410 L1082 410" class="arrow"/>
+  <text x="841" y="398" text-anchor="middle" class="msg">Envoyer demande d'authentification</text>
+
+  <!-- Alt valid/invalid -->
+  <rect x="86" y="445" width="1215" height="365" class="alt"/>
+  <rect x="105" y="462" width="180" height="28" class="altTitle"/>
+  <text x="195" y="482" text-anchor="middle" class="altText">alt</text>
+  <text x="315" y="482" class="note">Identifiants valides</text>
+
+  <path d="M1082 525 L600 525" class="return"/>
+  <text x="841" y="513" text-anchor="middle" class="msg">Retourner une session utilisateur</text>
+
+  <rect x="305" y="552" width="910" height="150" class="alt" opacity="0.75"/>
+  <rect x="325" y="568" width="180" height="28" class="altTitle"/>
+  <text x="415" y="588" text-anchor="middle" class="altText">alt</text>
+  <text x="535" y="588" class="note">Mot de passe initial</text>
+
+  <path d="M600 620 L170 620" class="return"/>
+  <text x="385" y="608" text-anchor="middle" class="msg">Rediriger vers changement de mot de passe</text>
+
+  <path d="M170 658 L600 658" class="arrow"/>
+  <text x="385" y="646" text-anchor="middle" class="msg">Saisir un nouveau mot de passe</text>
+
+  <path d="M600 690 L1082 690" class="arrow"/>
+  <text x="841" y="678" text-anchor="middle" class="msg">Envoyer nouveau mot de passe</text>
+
+  <line x1="305" y1="710" x2="1215" y2="710" class="sep"/>
+  <text x="330" y="733" class="note">else : mot de passe déjà changé</text>
+
+  <path d="M600 752 L170 752" class="return"/>
+  <text x="385" y="740" text-anchor="middle" class="msg">Rediriger vers Dashboard</text>
+
+  <line x1="86" y1="770" x2="1301" y2="770" class="sep"/>
+  <text x="105" y="795" class="note">else : identifiants invalides</text>
+
+  <path d="M1082 835 L600 835" class="return"/>
+  <text x="841" y="823" text-anchor="middle" class="msg">Retourner erreur d'authentification</text>
+  <path d="M600 865 L170 865" class="return"/>
+  <text x="385" y="853" text-anchor="middle" class="msg">Afficher message d'erreur</text>
+</svg>

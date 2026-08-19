@@ -1,0 +1,76 @@
+@startuml VPLMQA_Use_Case_Diagram
+left to right direction
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam actorStyle stick
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #FFFDD0
+  BorderColor #111111
+  FontColor #111111
+}
+skinparam rectangle {
+  BorderColor #111111
+  BackgroundColor #FFFFFF
+  FontColor #111111
+}
+
+actor "Testeur" as Tester
+actor "Agent" as Agent
+
+rectangle "QA avec AI" {
+  usecase "S'authentifier" as Auth
+  usecase "Consulter dashboard" as Dashboard
+  usecase "Configurer projet\net pages" as Project
+  usecase "Importer ou ecrire\nune feature" as Feature
+  usecase "Lancer test E2E" as Launch
+  usecase "Suivre execution" as Follow
+  usecase "Valider resultats" as Validate
+  usecase "Confirmer anomalie\nou ignorer" as Confirm
+  usecase "Configurer Azure DevOps\net membres" as Azure
+
+  usecase "Comprendre composants\nDOM et page" as Understand
+  usecase "Generer tests E2E" as Generate
+  usecase "Executer tests\navec Playwright" as Execute
+  usecase "Analyser logs\net screenshots" as Analyze
+  usecase "Comparer UI\nsi necessaire" as Compare
+  usecase "Produire rapport\net recommandations" as Report
+  usecase "Generer ticket\navec preuves" as Ticket
+  usecase "Synchroniser ticket\navec Azure DevOps" as Sync
+}
+
+Tester --> Auth
+Tester --> Dashboard
+Tester --> Project
+Tester --> Feature
+Tester --> Launch
+Tester --> Follow
+Tester --> Validate
+Tester --> Confirm
+Tester --> Azure
+
+Agent --> Understand
+Agent --> Generate
+Agent --> Execute
+Agent --> Analyze
+Agent --> Compare
+Agent --> Report
+Agent --> Ticket
+Agent --> Sync
+
+Dashboard ..> Auth : <<include>>
+Project ..> Auth : <<include>>
+Feature ..> Auth : <<include>>
+Launch ..> Auth : <<include>>
+Validate ..> Auth : <<include>>
+
+Launch ..> Generate : <<include>>
+Generate ..> Understand : <<include>>
+Generate ..> Execute : <<include>>
+Execute ..> Analyze : <<include>>
+Analyze ..> Report : <<include>>
+Compare ..> Report : <<include>>
+Confirm ..> Ticket : <<include>>
+Ticket ..> Sync : <<extend>>
+
+@enduml

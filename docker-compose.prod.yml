@@ -1,0 +1,98 @@
+version: "3.9"
+
+services:
+  gateway:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
+
+  auth-service:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 768M
+
+  project-service:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 768M
+
+  member-service:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 768M
+
+  design-service:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 1G
+
+  e2e-service:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 1G
+
+  ticket-service:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 768M
+
+  notification-service:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 768M
+
+  analytics-service:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 1G
+
+  config-service:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 512M
+
+  eureka-server:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 512M
+
+  langgraph-agents:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 1G

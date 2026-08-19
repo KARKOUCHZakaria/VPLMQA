@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: config-service
+  profiles:
+    active: native
+  cloud:
+    config:
+      enabled: false
+      server:
+        native:
+          search-locations: file:./config-repo
+
+server:
+  port: 8087
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URI:http://eureka-server:8761/eureka}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus

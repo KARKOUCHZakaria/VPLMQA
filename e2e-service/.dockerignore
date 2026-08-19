@@ -1,0 +1,5 @@
+**
+!Dockerfile
+!maven-target/
+maven-target/**
+!maven-target/*.jar

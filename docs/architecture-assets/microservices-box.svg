@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="560" viewBox="0 0 900 560">
+  <rect width="900" height="560" fill="#ffffff"/>
+  <rect x="20" y="20" width="860" height="520" rx="18" fill="#f8fbff" stroke="#cbd5e1" stroke-width="4"/>
+  <text x="450" y="70" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="800" fill="#111827">Spring Boot Microservices</text>
+
+  <defs>
+    <style>
+      .card { fill: #ffffff; stroke: #bfdbfe; stroke-width: 3; }
+      .name { font-family: Arial, sans-serif; font-size: 22px; font-weight: 800; fill: #111827; }
+      .meta { font-family: Arial, sans-serif; font-size: 16px; font-weight: 700; fill: #475569; }
+      .s { font-family: Arial, sans-serif; font-size: 34px; font-weight: 900; fill: #ffffff; }
+    </style>
+  </defs>
+
+  <g transform="translate(70 110)">
+    <rect class="card" x="0" y="0" width="340" height="78" rx="12"/>
+    <circle cx="43" cy="39" r="25" fill="#65a532"/>
+    <text class="s" x="43" y="51" text-anchor="middle">S</text>
+    <text class="name" x="195" y="33" text-anchor="middle">Auth Service</text>
+    <text class="meta" x="195" y="58" text-anchor="middle">DB: auth_db | Port: 8081</text>
+  </g>
+
+  <g transform="translate(490 110)">
+    <rect class="card" x="0" y="0" width="340" height="78" rx="12"/>
+    <circle cx="43" cy="39" r="25" fill="#65a532"/>
+    <text class="s" x="43" y="51" text-anchor="middle">S</text>
+    <text class="name" x="195" y="33" text-anchor="middle">Project Service</text>
+    <text class="meta" x="195" y="58" text-anchor="middle">DB: project_db | Port: 8088</text>
+  </g>
+
+  <g transform="translate(70 215)">
+    <rect class="card" x="0" y="0" width="340" height="78" rx="12"/>
+    <circle cx="43" cy="39" r="25" fill="#65a532"/>
+    <text class="s" x="43" y="51" text-anchor="middle">S</text>
+    <text class="name" x="195" y="33" text-anchor="middle">Design Service</text>
+    <text class="meta" x="195" y="58" text-anchor="middle">DB: design_db | Port: 8082</text>
+  </g>
+
+  <g transform="translate(490 215)">
+    <rect class="card" x="0" y="0" width="340" height="78" rx="12"/>
+    <circle cx="43" cy="39" r="25" fill="#65a532"/>
+    <text class="s" x="43" y="51" text-anchor="middle">S</text>
+    <text class="name" x="195" y="33" text-anchor="middle">E2E Service</text>
+    <text class="meta" x="195" y="58" text-anchor="middle">DB: tests_db | Port: 8083</text>
+  </g>
+
+  <g transform="translate(70 320)">
+    <rect class="card" x="0" y="0" width="340" height="78" rx="12"/>
+    <circle cx="43" cy="39" r="25" fill="#65a532"/>
+    <text class="s" x="43" y="51" text-anchor="middle">S</text>
+    <text class="name" x="195" y="33" text-anchor="middle">Ticket Service</text>
+    <text class="meta" x="195" y="58" text-anchor="middle">DB: ticket_db | Port: 8084</text>
+  </g>
+
+  <g transform="translate(490 320)">
+    <rect class="card" x="0" y="0" width="340" height="78" rx="12"/>
+    <circle cx="43" cy="39" r="25" fill="#65a532"/>
+    <text class="s" x="43" y="51" text-anchor="middle">S</text>
+    <text class="name" x="195" y="33" text-anchor="middle">Member Service</text>
+    <text class="meta" x="195" y="58" text-anchor="middle">DB: member_db | Port: 8089</text>
+  </g>
+
+  <g transform="translate(70 425)">
+    <rect class="card" x="0" y="0" width="340" height="78" rx="12"/>
+    <circle cx="43" cy="39" r="25" fill="#65a532"/>
+    <text class="s" x="43" y="51" text-anchor="middle">S</text>
+    <text class="name" x="195" y="33" text-anchor="middle">Notification Service</text>
+    <text class="meta" x="195" y="58" text-anchor="middle">DB: notification_db | Port: 8085</text>
+  </g>
+
+  <g transform="translate(490 425)">
+    <rect class="card" x="0" y="0" width="340" height="78" rx="12"/>
+    <circle cx="43" cy="39" r="25" fill="#65a532"/>
+    <text class="s" x="43" y="51" text-anchor="middle">S</text>
+    <text class="name" x="195" y="33" text-anchor="middle">Analytics Service</text>
+    <text class="meta" x="195" y="58" text-anchor="middle">DB: analytics_db | Port: 8086</text>
+  </g>
+</svg>

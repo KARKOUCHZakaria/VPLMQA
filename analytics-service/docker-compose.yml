@@ -1,0 +1,14 @@
+services:
+  analytics-service:
+    build: .
+    env_file:
+      - ../.env
+    image: vplmqa/analytics
+    ports: ["8086:8086"]
+    depends_on:
+      config-service: { condition: service_healthy }
+      postgres: { condition: service_healthy }
+      kafka: { condition: service_healthy }
+
+
+

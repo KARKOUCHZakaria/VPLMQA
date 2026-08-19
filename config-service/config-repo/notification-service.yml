@@ -1,0 +1,29 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/notification_db
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+  mail:
+    host: ${SPRING_MAIL_HOST:mailhog}
+    port: ${SPRING_MAIL_PORT:1025}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URI:http://eureka-server:8761/eureka}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus
+  tracing:
+    enabled: false
+
+logging:
+  structured: true
+
+gateway:
+  public-url: ${GATEWAY_PUBLIC_URL:http://localhost:8080}
