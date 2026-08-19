@@ -1,0 +1,75 @@
+.env
+.env.*
+!.env.example
+
+**/.env
+**/.env.*
+!**/.env.example
+
+# Local IDE and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Node / frontend
+node_modules/
+.pnpm-store/
+.next/
+dist/
+build/
+
+# Java / Maven
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Logs and temporary runtime output
+*.log
+.local-logs/
+.tmp/
+.tmp-pycache/
+tmp/
+temp-jar/
+output/
+
+# Secrets and generated auth/debug payloads
+token.txt
+login_res.json
+login.json
+payload.json
+schemas.json
+endpoint_test_results.json
+tmp-*.json
+secrets/
+
+# Large local archives and demo artifacts
+*.zip
+*.mp4
+video*_contact_sheet.png
+tmp-*.png
+
+# Local test/debug files kept out of the first clean Git history
+TestClient.*
+TestKey.*
+test-*.py
+test_*.py
+test-*.js
+test.ps1
+test-endpoints.ps1
+dump_schemas.py
+patch_apps.py
+seed_dbs.py
+
+# Extracted or temporary report/source documents
+Rapport_PFE_IIR*.txt
+Rapport_PFE_IIR*.doc
