@@ -38,7 +38,7 @@ On Windows, restrict access to these files using the VM account's file permissio
 ## Still required
 
 - Configure Azure DevOps organization/project/PAT in Settings and refresh members.
-- Configure Figma projects and test-account secrets in the application.
+- Configure projects and test-account secrets in the application.
 - Verify the VM can reach the application under test and external APIs, including
   any required VPN/proxy/certificates. Confirm Mistral quota with a real workflow.
 - Test login, an E2E scenario, a failure screenshot, and Azure ticket creation
