@@ -1,3 +1,5 @@
+# Default containerized deployment. Native installations should keep this file
+# unchanged and provide local endpoints through environment variables instead.
 name: vplmqa
 
 include:

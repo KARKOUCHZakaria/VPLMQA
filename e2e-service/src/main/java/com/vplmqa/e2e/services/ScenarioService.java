@@ -29,9 +29,18 @@ public class ScenarioService {
         this.featureRepository = featureRepository;
     }
 
-    public ScenarioResponse createScenario(UUID featureId, CreateScenarioRequest request) {
+    public synchronized ScenarioResponse createScenario(UUID featureId, CreateScenarioRequest request) {
         Feature feature = featureRepository.findById(featureId)
             .orElseThrow(() -> new RuntimeException("Feature not found"));
+
+        Scenario duplicate = scenarioRepository.findByFeatureId(featureId).stream()
+            .filter(candidate -> java.util.Objects.equals(candidate.getSequenceOrder(), request.sequenceOrder()))
+            .filter(candidate -> normalize(candidate.getName()).equals(normalize(request.name())))
+            .findFirst()
+            .orElse(null);
+        if (duplicate != null) {
+            return mapToResponse(duplicate);
+        }
 
         Scenario scenario = new Scenario();
         scenario.setFeature(feature);
@@ -44,6 +53,9 @@ public class ScenarioService {
         return mapToResponse(scenario);
     }
 
+    private String normalize(String value) {
+        return value == null ? "" : value.trim();
+    }
     public ScenarioResponse updateScenario(UUID id, UpdateScenarioRequest request) {
         Scenario scenario = scenarioRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Scenario not found"));
@@ -115,3 +127,5 @@ public class ScenarioService {
         );
     }
 }
+
+

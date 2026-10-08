@@ -1,5 +1,7 @@
 import { api } from './api';
 
+// Centralized E2E API contract used by the feature editor and test execution
+// screens. Secret values are deliberately never returned to the browser.
 export interface Feature {
   id: string;
   name: string;
@@ -52,7 +54,7 @@ export interface FeatureWithHierarchy extends Feature {
   scenarios: ScenarioWithSteps[];
 }
 
-// Features
+// Feature lifecycle
 export const getFeatures = async () => {
   return api.get<{ content?: Feature[] }>('/api/v1/features?size=100');
 };
@@ -96,7 +98,7 @@ export const deleteFeature = async (id: string) => {
   return api.delete<void>(`/api/v1/features/${id}`);
 };
 
-// Scenarios
+// Scenario lifecycle
 export const createScenario = async (featureId: string, data: Partial<Scenario>) => {
   return api.post<Scenario>(`/api/v1/features/${featureId}/scenarios`, data);
 };
@@ -109,7 +111,7 @@ export const deleteScenario = async (id: string) => {
   return api.delete<void>(`/api/v1/scenarios/${id}`);
 };
 
-// Steps
+// Step lifecycle
 export const createStep = async (scenarioId: string, data: Partial<Step>) => {
   return api.post<Step>(`/api/v1/scenarios/${scenarioId}/steps`, data);
 };
@@ -122,7 +124,7 @@ export const deleteStep = async (id: string) => {
   return api.delete<void>(`/api/v1/steps/${id}`);
 };
 
-// Execution
+// Execution is delegated to the LangGraph endpoint through the gateway.
 export const runTestExecution = async (featureId: string) => {
   return api.post<{ run_id: string; status: string; feature_id: string }>('/api/v1/agents/part2/run', {
     feature_id: featureId,

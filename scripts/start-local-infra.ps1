@@ -15,39 +15,36 @@ if (-not (Test-Path ".env")) {
 
 Write-Host "Starting local infra and frontend dev container..."
 $dockerOut = Join-Path $logDir "docker-start.out.log"
-$dockerErr = Join-Path $logDir "docker-start.err.log"
-$process = Start-Process -FilePath "docker" `
-    -ArgumentList @("compose", "--env-file", ".env", "-f", "docker-compose.local.yml", "up", "-d", "--quiet-pull", "--build", "postgres", "redis", "zookeeper", "kafka", "minio", "vault", "vault-init", "mailhog", "front-end") `
-    -WorkingDirectory $repo `
-    -NoNewWindow `
-    -Wait `
-    -PassThru `
-    -RedirectStandardOutput $dockerOut `
-    -RedirectStandardError $dockerErr
-
-Get-Content -LiteralPath $dockerOut -ErrorAction SilentlyContinue | Write-Host
-Get-Content -LiteralPath $dockerErr -ErrorAction SilentlyContinue | Write-Host
-
-if ($process.ExitCode -ne 0) {
-    throw "Docker compose failed with exit code $($process.ExitCode). See $dockerErr"
+Set-Content -LiteralPath $dockerOut -Encoding utf8 -Value ""
+$previousPreference = $ErrorActionPreference
+try {
+    $ErrorActionPreference = "Continue"
+    & docker compose --env-file .env -f docker-compose.local.yml up -d --quiet-pull --build postgres redis zookeeper kafka minio vault vault-init mailhog front-end 2>&1 |
+        ForEach-Object {
+            Write-Host $_.ToString()
+            Add-Content -LiteralPath $dockerOut -Encoding utf8 -Value $_.ToString()
+        }
+    $dockerExitCode = $LASTEXITCODE
+} finally { $ErrorActionPreference = $previousPreference }
+if ($dockerExitCode -ne 0) {
+    throw "Docker compose failed with exit code $dockerExitCode. See $dockerOut"
 }
 
 function Invoke-DockerCompose {
     param([string[]]$Arguments, [string]$Name)
     $out = Join-Path $logDir "$Name.out.log"
-    $err = Join-Path $logDir "$Name.err.log"
-    $proc = Start-Process -FilePath "docker" `
-        -ArgumentList $Arguments `
-        -WorkingDirectory $repo `
-        -NoNewWindow `
-        -Wait `
-        -PassThru `
-        -RedirectStandardOutput $out `
-        -RedirectStandardError $err
-    Get-Content -LiteralPath $out -ErrorAction SilentlyContinue | Write-Host
-    Get-Content -LiteralPath $err -ErrorAction SilentlyContinue | Write-Host
-    if ($proc.ExitCode -ne 0) {
-        throw "$Name failed with exit code $($proc.ExitCode). See $err"
+    Set-Content -LiteralPath $out -Encoding utf8 -Value ""
+    $previousPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = "Continue"
+        & docker @Arguments 2>&1 | ForEach-Object {
+            Write-Host $_.ToString()
+            Add-Content -LiteralPath $out -Encoding utf8 -Value $_.ToString()
+        }
+        $dockerExitCode = $LASTEXITCODE
+    } finally { $ErrorActionPreference = $previousPreference }
+    if ($dockerExitCode -ne 0) {
+        throw "$Name failed with exit code $dockerExitCode. See $out"
     }
 }
 

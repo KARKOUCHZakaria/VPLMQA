@@ -3,7 +3,6 @@ import { createBrowserRouter, Navigate } from "react-router";
 import { Login } from "./pages/Login";
 import { Home } from "./pages/Home";
 import { DashboardStats } from "./pages/DashboardStats";
-import { DesignToImplement } from "./pages/DesignToImplement";
 import { Tests } from "./pages/Tests";
 import { Tickets } from "./pages/Tickets";
 import { Analysis } from "./pages/Analysis";
@@ -12,7 +11,6 @@ import { Settings } from "./pages/Settings";
 import { ChangePassword } from "./pages/ChangePassword";
 import { ProjectManagement } from "./pages/ProjectManagement";
 import { FeatureBuilder } from "./components/e2e/FeatureBuilder";
-import { ComponentComparison } from "./pages/ComponentComparison";
 
 const protectedElement = (Component: ComponentType) => {
   const ProtectedRoute = () => (
@@ -28,15 +26,15 @@ export const router = createBrowserRouter([
   },
   {
     path: "/",
+    element: <Navigate to="/login" replace />,
+  },
+  {
+    path: "/home",
     element: protectedElement(Home),
   },
   {
     path: "/dashboard",
     element: protectedElement(DashboardStats),
-  },
-  {
-    path: "/design-to-implement",
-    element: protectedElement(DesignToImplement),
   },
   {
     path: "/projects",
@@ -70,8 +68,8 @@ export const router = createBrowserRouter([
     path: "/feature-builder",
     element: protectedElement(FeatureBuilder),
   },
-  {
-    path: "/component-comparison",
-    element: protectedElement(ComponentComparison),
-  },
 ]);
+
+
+
+

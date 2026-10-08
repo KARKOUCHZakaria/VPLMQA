@@ -11,7 +11,7 @@ import { FeaturePipeline, type Feature, type PipelineRun, type PipelineStage } f
 import { FeatureBuilder } from "../components/e2e/FeatureBuilder";
 import { ArrowDown, ArrowUp, Copy, Download, KeyRound, Pencil, Plus, Save, ShieldCheck, Trash2, X } from "lucide-react";
 import { api } from "../utils/api";
-import { getFeatures, getFeatureWithHierarchy, getFeatureExecutions, createFeature, updateFeature, deleteFeature, exportFeatureGherkin, createScenario, updateScenario, deleteScenario, createStep, updateStep, deleteStep, runFeatureAgentPipeline, listProjectSecrets, saveProjectSecret, type Feature as ApiFeature, type FeatureWithHierarchy } from "../utils/e2eApi";
+import { getFeatures, getFeatureWithHierarchy, getFeatureExecutions, updateFeature, deleteFeature, exportFeatureGherkin, createScenario, updateScenario, deleteScenario, createStep, updateStep, deleteStep, runFeatureAgentPipeline, listProjectSecrets, saveProjectSecret, type Feature as ApiFeature, type FeatureWithHierarchy } from "../utils/e2eApi";
 import { agentApi } from "../utils/agentApi";
 import { cn } from "../components/ui/utils";
 
@@ -934,48 +934,6 @@ export function Tests() {
 
   const handleSaveFeature = async (savedFeature: any) => {
     try {
-      toast.loading("Saving feature to gateway...");
-      const gherkinLines = [`Feature: ${savedFeature.name}`];
-      (savedFeature.scenarios || []).forEach((scenario: any) => {
-        gherkinLines.push("", `  Scenario: ${scenario.name || "Unnamed scenario"}`);
-        (scenario.steps || []).forEach((step: any) => {
-          gherkinLines.push(`    ${step.type || "Given"} ${step.description || ""}`.trimEnd());
-        });
-      });
-      const featureReq = {
-        name: savedFeature.name,
-        description: savedFeature.name,
-        gherkinContent: `${gherkinLines.join("\n")}\n`,
-        targetMode: savedFeature.targetMode,
-        projectId: savedFeature.projectId,
-      };
-      const createdFeature = await createFeature(featureReq);
-
-      if (createdFeature && createdFeature.id) {
-        for (let i = 0; i < savedFeature.scenarios.length; i++) {
-          const scn = savedFeature.scenarios[i];
-          const scnReq = {
-            name: scn.name,
-            description: scn.name,
-            sequenceOrder: i + 1
-          };
-          const createdScn = await createScenario(createdFeature.id, scnReq);
-
-          if (createdScn && createdScn.id) {
-            for (let j = 0; j < scn.steps.length; j++) {
-              const step = scn.steps[j];
-              const stepReq = {
-                type: step.type,
-                text: step.description,
-                sequenceOrder: j + 1
-              };
-              await createStep(createdScn.id, stepReq);
-            }
-          }
-        }
-      }
-
-      toast.dismiss();
       const toastId = toast.success("Feature saved", {
         description: `Select "${savedFeature.name}" in Pipeline and click Run in Chrome to execute it.`,
         duration: 8000,
@@ -1542,6 +1500,11 @@ export function Tests() {
       testExecutionId: selectedScenario.executionId,
       source: "e2e",
       action,
+      evidence: selectedScenario.screenshots.filter((screenshot) => Boolean(screenshot.url)).map((screenshot, index) => ({
+        fileName: screenshot.name || `e2e-failure-${index + 1}.png`,
+        url: screenshot.url as string,
+        contentType: "image/png",
+      })),
     };
   };
 
@@ -2144,3 +2107,5 @@ export function Tests() {
     </div>
   );
 }
+
+

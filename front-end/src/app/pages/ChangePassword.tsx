@@ -63,7 +63,7 @@ export function ChangePassword() {
       });
 
       setTimeout(() => {
-        navigate("/");
+        navigate("/home");
       }, 1500);
     } catch (err: any) {
       toast.error("Password change failed", {

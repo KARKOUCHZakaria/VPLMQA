@@ -13,12 +13,20 @@ export interface Ticket {
   componentCanonicalName?: string;
   componentHtmlId?: string;
   assignedTo?: string;
+  tags?: string[];
   azureWorkItemId?: number;
   azureWorkItemUrl?: string;
   azureSyncStatus?: string;
   azureSyncError?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface TicketAttachmentPayload {
+  fileName: string;
+  storageUrl: string;
+  contentType: string;
+  base64Content?: string;
 }
 
 export interface AzureDevOpsConnection {
@@ -44,6 +52,9 @@ export const ticketApi = {
     
   getTicket: (id: string) => 
     api.get<Ticket>(`/api/v1/tickets/${id}`),
+
+  addAttachment: (ticketId: string, data: TicketAttachmentPayload) =>
+    api.post(`/api/v1/tickets/${ticketId}/attachments`, data),
     
   listProjectTickets: (projectId: string, status?: string, severity?: string) => {
     let url = `/api/v1/tickets/projects/${projectId}`;

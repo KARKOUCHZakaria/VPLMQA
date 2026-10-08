@@ -20,6 +20,13 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestClient;
 
+/**
+ * Gateway between the E2E REST API and the LangGraph runner.
+ *
+ * <p>The service enriches a Gherkin execution request with project context and
+ * uses a short TCP preflight so a native installation can fall back to a local
+ * agent endpoint when the configured container hostname is unavailable.</p>
+ */
 @Service
 public class GherkinE2EAutomationService {
 
@@ -48,6 +55,8 @@ public class GherkinE2EAutomationService {
     }
 
     public Map<String, Object> run(GherkinE2ERunRequest request) {
+        // Keep orchestration data in one payload so the agent can execute a
+        // feature without directly coupling to Spring services.
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("gherkin", request.gherkin());
         payload.put("headless", request.headless() == null || request.headless());
@@ -94,6 +103,8 @@ public class GherkinE2EAutomationService {
     }
 
     private RestClient selectReachableAgentClient(List<String> attempted) {
+        // The configured address remains preferred. Local fallbacks support
+        // developers who run LangGraph outside Docker.
         List<String> candidates = new ArrayList<>();
         candidates.add(agentsUrl);
         for (String fallbackUrl : List.of("http://localhost:8090", "http://host.docker.internal:8090")) {
@@ -147,6 +158,8 @@ public class GherkinE2EAutomationService {
 
     @SuppressWarnings("unchecked")
     private Object loadComponentCatalog(GherkinE2ERunRequest request) {
+        // A missing catalog must not block an E2E run; the agent can still use
+        // the Gherkin feature and registered application pages.
         if (request.projectId() == null) {
             return java.util.List.of();
         }

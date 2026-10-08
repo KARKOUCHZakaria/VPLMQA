@@ -1,4 +1,4 @@
 package com.vplmqa.ticket.dto;
 
-public record TicketAttachmentRequest(String fileName, String storageUrl, String contentType) {
+public record TicketAttachmentRequest(String fileName, String storageUrl, String contentType, String base64Content) {
 }

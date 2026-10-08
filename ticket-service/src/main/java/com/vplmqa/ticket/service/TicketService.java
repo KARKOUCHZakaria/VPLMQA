@@ -13,8 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class TicketService {
@@ -45,6 +47,10 @@ public class TicketService {
         ticket.setComponentCanonicalName(request.componentCanonicalName());
         ticket.setComponentHtmlId(request.componentHtmlId());
         ticket.setAssignedTo(request.assignedTo());
+        ticket.setTags(request.tags() == null ? new LinkedHashSet<>() : request.tags().stream()
+                .filter(tag -> tag != null && !tag.isBlank())
+                .map(tag -> tag.trim().replaceAll("\\s+", " "))
+                .collect(Collectors.toCollection(LinkedHashSet::new)));
         Ticket saved = ticketRepository.save(ticket);
         kafkaTemplate.send("ticket.created", saved.getId().toString());
         try {

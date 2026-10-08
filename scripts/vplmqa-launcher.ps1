@@ -9,7 +9,7 @@ New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 
 $form = New-Object System.Windows.Forms.Form
 $form.Text = "VPLMQA Local Launcher"
-$form.Size = New-Object System.Drawing.Size(560, 365)
+$form.Size = New-Object System.Drawing.Size(760, 560)
 $form.StartPosition = "CenterScreen"
 $form.BackColor = [System.Drawing.Color]::FromArgb(250, 247, 255)
 
@@ -80,6 +80,50 @@ $deleteButton.ForeColor = [System.Drawing.Color]::FromArgb(220, 38, 38)
 $deleteButton.FlatStyle = "Flat"
 $form.Controls.Add($deleteButton)
 
+$logBox = New-Object System.Windows.Forms.TextBox
+$logBox.Multiline = $true
+$logBox.ReadOnly = $true
+$logBox.ScrollBars = "Vertical"
+$logBox.Font = New-Object System.Drawing.Font("Consolas", 9)
+$logBox.Location = New-Object System.Drawing.Point(32, 280)
+$logBox.Size = New-Object System.Drawing.Size(680, 220)
+$logBox.Anchor = "Top, Bottom, Left, Right"
+$form.Controls.Add($logBox)
+$script:startupProcess = $null
+$script:lastLogText = ""
+$timer = New-Object System.Windows.Forms.Timer
+$timer.Interval = 1000
+$timer.Add_Tick({
+    if (-not $script:startupProcess) { return }
+    $path = Join-Path $logDir "start-all.log"
+    $lines = @(Get-Content -LiteralPath $path -Tail 80 -ErrorAction SilentlyContinue)
+    $text = $lines -join [Environment]::NewLine
+    if ($text -ne $script:lastLogText) {
+        $script:lastLogText = $text
+        $logBox.Text = $text
+        $logBox.SelectionStart = $logBox.TextLength
+        $logBox.ScrollToCaret()
+        $latest = $lines | Where-Object { $_ -match '^\[\d{2}:\d{2}:\d{2}\]' } | Select-Object -Last 1
+        if ($latest) { $status.Text = $latest }
+    }
+    if ($script:startupProcess.HasExited) {
+        if ($script:startupProcess.ExitCode -eq 0 -and $text -match 'ALL SERVICES ARE READY') {
+            $status.Text = "ALL SERVICES ARE READY - http://localhost:3000"
+            $status.ForeColor = [System.Drawing.Color]::ForestGreen
+        } else {
+            $failure = $lines | Where-Object { $_ -match 'STARTUP FAILED:' } | Select-Object -Last 1
+            $status.Text = if ($failure) { $failure } else { "Startup failed. See .local-logs/launcher.err.log" }
+            $status.ForeColor = [System.Drawing.Color]::Firebrick
+        }
+        $startButton.Enabled = $true
+        $stopButton.Enabled = $true
+        $deleteButton.Enabled = $true
+        $script:startupProcess = $null
+    }
+})
+$timer.Start()
+$form.Add_FormClosed({ $timer.Stop(); $timer.Dispose() })
+
 function Start-StackProcess {
     param(
         [string]$BatchName,
@@ -87,11 +131,24 @@ function Start-StackProcess {
     )
     $status.Text = $StartedMessage
     $batch = Join-Path $repo $BatchName
-    Start-Process -FilePath $batch -WorkingDirectory $repo
+    Start-Process -FilePath $batch -WorkingDirectory $repo -WindowStyle Hidden
 }
 
 $startButton.Add_Click({
-    Start-StackProcess -BatchName "START_VPLMQA_LOCAL.bat" -StartedMessage "Starting... logs are written in .local-logs/start-all.log"
+    $status.Text = "Starting... live progress appears below."
+    $status.ForeColor = [System.Drawing.Color]::FromArgb(91, 56, 134)
+    $logBox.Clear()
+    $script:lastLogText = ""
+    Set-Content -LiteralPath (Join-Path $logDir "start-all.log") -Encoding utf8 -Value ""
+    $scriptPath = Join-Path $PSScriptRoot "start-all-local.ps1"
+    $script:startupProcess = Start-Process -FilePath "powershell.exe" `
+        -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$scriptPath`"" `
+        -WorkingDirectory $repo -WindowStyle Hidden -PassThru `
+        -RedirectStandardOutput (Join-Path $logDir "launcher.out.log") `
+        -RedirectStandardError (Join-Path $logDir "launcher.err.log")
+    $startButton.Enabled = $false
+    $stopButton.Enabled = $false
+    $deleteButton.Enabled = $false
 })
 
 $stopButton.Add_Click({

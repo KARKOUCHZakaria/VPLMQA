@@ -172,7 +172,7 @@ services:
       GEMINI_MAX_OUTPUT_TOKENS: ${GEMINI_MAX_OUTPUT_TOKENS:-4096}
       GEMINI_TEMPERATURE: ${GEMINI_TEMPERATURE:-0.2}
       GEMINI_MIN_CALL_INTERVAL_SECONDS: ${GEMINI_MIN_CALL_INTERVAL_SECONDS:-1}
-      E2E_BROWSER_CDP_URL: ${E2E_BROWSER_CDP_URL:-http://192.168.65.254:9222}
+      E2E_BROWSER_CDP_URL: ${E2E_BROWSER_CDP_URL:-http://host.docker.internal:9222}
       E2E_BROWSER_CDP_REQUIRED: ${E2E_BROWSER_CDP_REQUIRED:-true}
       E2E_BROWSER_LAUNCHER_URL: ${E2E_BROWSER_LAUNCHER_URL:-http://host.docker.internal:9223/launch}
       E2E_BROWSER_CLOSE_URL: ${E2E_BROWSER_CLOSE_URL:-http://host.docker.internal:9223/close}
@@ -207,3 +207,4 @@ secrets:
     environment: VAULT_TOKEN
   mistral_api_key:
     file: ./secrets/mistral_api_key.txt
+

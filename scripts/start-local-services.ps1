@@ -20,6 +20,24 @@ function Repair-ProcessPathEnvironment {
 
 Repair-ProcessPathEnvironment
 
+function Test-ServiceHealth {
+    param([int]$Port)
+    try {
+        $health = Invoke-RestMethod -Uri "http://127.0.0.1:$Port/actuator/health" -TimeoutSec 2
+        return $health.status -eq "UP"
+    } catch { return $false }
+}
+
+$servicePorts = @(8761, 8087, 8081, 8088, 8089, 8082, 8084, 8085, 8086, 8083, 8080)
+$allHealthy = $true
+foreach ($port in $servicePorts) {
+    if (-not (Test-ServiceHealth -Port $port)) { $allHealthy = $false; break }
+}
+if ($allHealthy) {
+    Write-Host "ALL SPRING SERVICES ARE READY - existing services reused. Use Stop All before restarting changed backend code."
+    exit 0
+}
+
 function Test-LocalPort {
     param([int]$Port)
     try {
@@ -237,27 +255,40 @@ Set-Location '$repo'
     $process = Start-Process powershell.exe -ArgumentList "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", $cmd -WindowStyle Hidden -PassThru
     "$($process.Id),$name,$port,$log" | Add-Content -Encoding ascii $pidFile
     Write-Host "Started $name on $port (PID $($process.Id), log $log)"
-    Start-Sleep -Seconds 8
+    if ($name -in @("eureka-server", "config-service")) {
+        Write-Host "Waiting for $name before starting its dependent services..."
+        $dependencyDeadline = (Get-Date).AddSeconds(120)
+        while (-not (Test-ServiceHealth -Port $port)) {
+            if ($process.HasExited) { throw "$name exited during startup. See $log" }
+            if ((Get-Date) -ge $dependencyDeadline) { throw "$name did not become healthy. See $log" }
+            Start-Sleep -Seconds 2
+        }
+    }
 }
 
 Write-Host ""
 Write-Host "Waiting for Spring service health checks..."
-$deadline = (Get-Date).AddMinutes(15)
+$deadline = (Get-Date).AddMinutes(5)
 $remaining = @{}
 foreach ($service in $services) { $remaining[$service.Name] = $service }
 
 while ($remaining.Count -gt 0 -and (Get-Date) -lt $deadline) {
+    Write-Host "Waiting for: $((@($remaining.Keys) | Sort-Object) -join ', ')"
     foreach ($name in @($remaining.Keys)) {
         $service = $remaining[$name]
         $healthUrl = "http://localhost:$($service.Port)/actuator/health"
         try {
-            $response = Invoke-WebRequest -UseBasicParsing -Uri $healthUrl -TimeoutSec 4
-            if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 500) {
+            $health = Invoke-RestMethod -Uri $healthUrl -TimeoutSec 4
+            if ($health.status -eq "UP") {
                 Write-Host "Healthy: $name on $($service.Port)"
                 $remaining.Remove($name)
             }
         } catch {
-            Start-Sleep -Milliseconds 200
+            # Keep polling while the application initializes.
+        }
+        $entry = Get-Content -LiteralPath $pidFile | Where-Object { $_.Split(',')[1] -eq $name } | Select-Object -Last 1
+        if ($remaining.ContainsKey($name) -and $entry -and -not (Get-Process -Id ([int]$entry.Split(',')[0]) -ErrorAction SilentlyContinue)) {
+            throw "$name exited during startup. See $(Join-Path $logDir "$name.log")"
         }
     }
     if ($remaining.Count -gt 0) {

@@ -15,13 +15,46 @@ import {
 } from "../components/ui/select";
 import { toast } from "sonner";
 import { Toaster } from "../components/ui/sonner";
-import { AlertCircle, ArrowLeft, CheckCircle2, Plus, Send, UserRound } from "lucide-react";
-import { ticketApi, Ticket, type AzureDevOpsConnection, type AzureDevOpsMember } from "../utils/ticketApi";
+import { AlertCircle, ArrowLeft, CheckCircle2, Plus, RefreshCw, Send, UserRound, X } from "lucide-react";
+import { ticketApi, Ticket, type AzureDevOpsConnection, type AzureDevOpsMember, type TicketAttachmentPayload } from "../utils/ticketApi";
 import { projectApi, type Project } from "../utils/projectApi";
+
+type TicketEvidence = {
+  fileName: string;
+  url: string;
+  contentType?: string;
+};
 
 type TicketDraft = Partial<Ticket> & {
   source?: string;
   action?: string;
+  evidence?: TicketEvidence[];
+};
+
+const readEvidence = async (evidence: TicketEvidence): Promise<TicketAttachmentPayload> => {
+  try {
+    const response = await fetch(evidence.url);
+    if (!response.ok) throw new Error(`Unable to retrieve ${evidence.fileName}.`);
+    const blob = await response.blob();
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error(`Unable to read ${evidence.fileName}.`));
+      reader.readAsDataURL(blob);
+    });
+    return {
+      fileName: evidence.fileName,
+      storageUrl: evidence.url,
+      contentType: evidence.contentType || blob.type || "image/png",
+      base64Content: dataUrl.split(",", 2)[1] || "",
+    };
+  } catch {
+    return {
+      fileName: evidence.fileName,
+      storageUrl: evidence.url,
+      contentType: evidence.contentType || "image/png",
+    };
+  }
 };
 
 const emptyDraft: TicketDraft = {
@@ -31,6 +64,7 @@ const emptyDraft: TicketDraft = {
   severity: "MEDIUM",
   status: "OPEN",
   assignedTo: "",
+  tags: [],
 };
 
 export function Tickets() {
@@ -49,6 +83,8 @@ export function Tickets() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectsLoading, setProjectsLoading] = useState(true);
   const [azureConnections, setAzureConnections] = useState<AzureDevOpsConnection[]>([]);
+  const [tagInput, setTagInput] = useState("");
+  const [membersLoading, setMembersLoading] = useState(false);
 
   const activeProjectId = useMemo(() => draft.projectId || incomingDraft?.projectId || "", [draft.projectId, incomingDraft?.projectId]);
   const availableAzureConnections = useMemo(
@@ -71,8 +107,10 @@ export function Tickets() {
     [availableAzureConnections, selectedAzureOrganization]
   );
   const selectedAzureProjectId = useMemo(
-    () => azureProjectOptions.some((connection) => connection.projectId === draft.projectId) ? draft.projectId || "" : "",
-    [azureProjectOptions, draft.projectId]
+    () => azureConnection && azureProjectOptions.some((connection) => connection.projectId === azureConnection.projectId)
+      ? azureConnection.projectId
+      : "",
+    [azureConnection, azureProjectOptions]
   );
   const linkedProject = useMemo(
     () => projects.find((project) => project.id === draft.projectId),
@@ -197,6 +235,42 @@ export function Tickets() {
     setDraft((current) => ({ ...current, ...patch }));
   };
 
+  const loadAzureMembers = async (projectId: string, notify = false) => {
+    if (!projectId) return;
+    try {
+      setMembersLoading(true);
+      const members = await ticketApi.getAzureDevOpsMembers(projectId);
+      setAzureMembers(members);
+      if (notify) {
+        toast.success(`${members.length} Azure DevOps member${members.length === 1 ? "" : "s"} available for assignment.`);
+      }
+    } catch (error) {
+      setAzureMembers([]);
+      if (notify) {
+        toast.error("Unable to load Azure DevOps members", {
+          description: error instanceof Error ? error.message : "Check the saved Azure connection and PAT scopes.",
+        });
+      }
+    } finally {
+      setMembersLoading(false);
+    }
+  };
+
+  const addTag = () => {
+    const tag = tagInput.trim().replace(/\s+/g, " ");
+    if (!tag) return;
+    setDraft((current) => {
+      const tags = current.tags || [];
+      if (tags.some((item) => item.toLocaleLowerCase() === tag.toLocaleLowerCase())) return current;
+      return { ...current, tags: [...tags, tag] };
+    });
+    setTagInput("");
+  };
+
+  const removeTag = (tag: string) => {
+    setDraft((current) => ({ ...current, tags: (current.tags || []).filter((item) => item !== tag) }));
+  };
+
   const selectAzureConnection = (connection: AzureDevOpsConnection) => {
     setAzureConnection(connection);
     setSelectedAzureOrganization(connection.organization.trim());
@@ -250,7 +324,19 @@ export function Tickets() {
         componentCanonicalName: draft.componentCanonicalName,
         componentHtmlId: draft.componentHtmlId,
         assignedTo: draft.assignedTo?.trim() || undefined,
+        tags: (draft.tags || []).map((tag) => tag.trim()).filter(Boolean),
       });
+      const evidence = draft.evidence || [];
+      const attachmentErrors: string[] = [];
+      let attachedCount = 0;
+      for (const item of evidence) {
+        try {
+          await ticketApi.addAttachment(ticket.id, await readEvidence(item));
+          attachedCount += 1;
+        } catch (error) {
+          attachmentErrors.push(error instanceof Error ? error.message : `Unable to attach ${item.fileName}.`);
+        }
+      }
       if (ticket.azureSyncStatus === "FAILED") {
         toast.warning("Ticket saved locally, but Azure sync failed", {
           description: ticket.azureSyncError || "Check the Azure DevOps project, work-item type, PAT, and permissions.",
@@ -266,6 +352,12 @@ export function Tickets() {
         toast.success("Ticket created locally", {
           description: `Ticket ${ticket.id.slice(0, 8).toUpperCase()} is ready for tracking.`,
         });
+      }
+      if (attachedCount > 0) {
+        toast.success(`${attachedCount} screenshot${attachedCount === 1 ? "" : "s"} attached to the ticket.`);
+      }
+      if (attachmentErrors.length > 0) {
+        toast.warning("Ticket created, but some screenshots could not be attached", { description: attachmentErrors[0] });
       }
       setShowForm(false);
       setDraft({ ...emptyDraft, projectId: draft.projectId });
@@ -339,6 +431,38 @@ export function Tickets() {
                     className="bg-input-background"
                   />
                 </label>
+
+                <div className="space-y-2">
+                  <span className="text-sm font-medium text-foreground">Tags</span>
+                  <div className="flex flex-wrap gap-2 rounded-md border border-border bg-input-background p-2">
+                    {(draft.tags || []).map((tag) => (
+                      <Badge key={tag} className="gap-1 bg-primary/10 text-primary hover:bg-primary/10">
+                        {tag}
+                        <button type="button" onClick={() => removeTag(tag)} className="rounded-sm hover:text-destructive" aria-label={`Remove ${tag} tag`}>
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                    <div className="flex min-w-[190px] flex-1 items-center gap-2">
+                      <Input
+                        value={tagInput}
+                        onChange={(event) => setTagInput(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            event.preventDefault();
+                            addTag();
+                          }
+                        }}
+                        placeholder="Add a tag"
+                        className="h-8 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0"
+                      />
+                      <button type="button" onClick={addTag} className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-primary hover:bg-primary/10" title="Add tag" aria-label="Add tag">
+                        <Plus className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Use tags to classify the issue before it is sent to Azure DevOps.</p>
+                </div>
 
                 <label className="block space-y-2">
                   <span className="text-sm font-medium text-foreground">Description</span>
@@ -424,8 +548,19 @@ export function Tickets() {
                   )}
                 </label>
 
-                <label className="block space-y-2">
-                  <span className="text-sm font-medium text-foreground">Azure assignee</span>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm font-medium text-foreground">Azure assignee</span>
+                    <button
+                      type="button"
+                      onClick={() => azureConnection && void loadAzureMembers(azureConnection.projectId, true)}
+                      disabled={!azureConnection || !azureConnection.enabled || !azureConnection.credentialStored || membersLoading}
+                      className="inline-flex items-center gap-1 text-xs font-medium text-primary disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <RefreshCw className={`h-3.5 w-3.5 ${membersLoading ? "animate-spin" : ""}`} />
+                      Refresh members
+                    </button>
+                  </div>
                   {selectedAzureProject && azureMembers.length > 0 ? (
                     <Select value={draft.assignedTo || ""} onValueChange={(value) => updateDraft({ assignedTo: value })}>
                       <SelectTrigger className="bg-input-background">
@@ -451,7 +586,7 @@ export function Tickets() {
                       />
                     </div>
                   )}
-                </label>
+                </div>
 
                 <label className="block space-y-2">
                   <span className="text-sm font-medium text-foreground">Severity</span>
@@ -524,6 +659,11 @@ export function Tickets() {
                           {ticket.assignedTo}
                         </Badge>
                       )}
+                      {(ticket.tags || []).map((tag) => (
+                        <Badge key={tag} variant="outline" className="border-primary/30 text-primary">
+                          {tag}
+                        </Badge>
+                      ))}
                     </div>
                     <h3 className="text-lg font-semibold mb-2">{ticket.title}</h3>
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-4">{ticket.description}</p>

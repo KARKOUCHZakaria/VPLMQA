@@ -1,3 +1,6 @@
+"""End-to-end agent graph: parse Gherkin, reuse or create safe step functions,
+execute the plan, and retain evidence for failures."""
+
 from pathlib import Path
 
 from langgraph.graph import END, START, StateGraph
@@ -50,6 +53,8 @@ def classify_confidentiality(state: AgentState) -> AgentState:
 
 
 def lookup_step_registry(state: AgentState) -> AgentState:
+    # Reuse validated functions before requesting generation to reduce token
+    # consumption and variation between equivalent test steps.
     matches = []
     missing = []
     for step in state.get("normalized_steps", []):
@@ -76,6 +81,8 @@ def generate_safe_step_functions(state: AgentState) -> AgentState:
 
 
 def handle_confidential_missing_steps(state: AgentState) -> AgentState:
+    # Never send a secret-bearing step to a cloud model. The generated function
+    # keeps inputs redacted and resolves Vault aliases at execution time.
     generated = [
         generator.generate(step, "manual-redacted")
         for step in state.get("missing_steps", [])
@@ -211,6 +218,8 @@ def route_execution(state: AgentState) -> str:
 
 
 def capture_error_artifacts(state: AgentState) -> AgentState:
+    # Store the failure image once and return its durable MinIO reference for
+    # reports and ticket attachments.
     failed_step = state.get("failed_step") or {}
     local_screenshot = state.get("execution_result", {}).get("local_screenshot_path")
     if local_screenshot:
@@ -290,6 +299,8 @@ def format_failure_response(state: AgentState) -> AgentState:
 
 
 def create_workflow():
+    # The graph separates preparation, execution, evidence capture, and repair
+    # so each phase can be observed independently during troubleshooting.
     workflow = StateGraph(AgentState)
     workflow.add_node("parse_gherkin", parse_gherkin)
     workflow.add_node("normalize_steps", normalize_steps)

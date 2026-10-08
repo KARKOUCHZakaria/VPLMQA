@@ -32,22 +32,21 @@ function Invoke-LoggedScript {
         [string]$Name
     )
 
-    $stdout = Join-Path $logDir "$Name.out.log"
-    $stderr = Join-Path $logDir "$Name.err.log"
-    $process = Start-Process -FilePath "powershell" `
-        -ArgumentList @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $ScriptPath) `
-        -WorkingDirectory $repo `
-        -NoNewWindow `
-        -Wait `
-        -PassThru `
-        -RedirectStandardOutput $stdout `
-        -RedirectStandardError $stderr
-
-    Get-Content -LiteralPath $stdout -ErrorAction SilentlyContinue | Tee-Object -FilePath $startLog -Append
-    Get-Content -LiteralPath $stderr -ErrorAction SilentlyContinue | Tee-Object -FilePath $startLog -Append
-
-    if ($process.ExitCode -ne 0) {
-        throw "$Name failed with exit code $($process.ExitCode). See $stderr"
+    $previousPreference = $ErrorActionPreference
+    try {
+    $ErrorActionPreference = "Continue"
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $ScriptPath 2>&1 |
+        ForEach-Object {
+            $line = $_.ToString()
+            Write-Host $line
+            Add-Content -Encoding utf8 -Path $startLog -Value $line
+        }
+    $scriptExitCode = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previousPreference
+    }
+    if ($scriptExitCode -ne 0) {
+        throw "$Name failed with exit code $scriptExitCode. See $startLog"
     }
 }
 
@@ -59,6 +58,17 @@ function Test-HttpOk {
     } catch {
         return $false
     }
+}
+
+function Wait-HttpReady {
+    param([string]$Name, [string]$Url, [int]$TimeoutSeconds = 120)
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    while (-not (Test-HttpOk -Url $Url)) {
+        if ((Get-Date) -ge $deadline) { throw "$Name did not become ready at $Url. See .local-logs." }
+        Write-Step "Waiting for $Name at $Url..."
+        Start-Sleep -Seconds 3
+    }
+    Write-Step "$Name is ready at $Url"
 }
 
 function Start-E2EChromeRunner {
@@ -111,6 +121,8 @@ function Start-E2EChromeRunner {
 }
 
 Set-Location $repo
+Set-Content -Encoding utf8 -Path $startLog -Value ""
+try {
 Write-Step "Starting VPLMQA local stack..."
 
 Write-Step "Starting E2E Chrome runner..."
@@ -122,8 +134,15 @@ Invoke-LoggedScript -ScriptPath (Join-Path $PSScriptRoot "start-local-infra.ps1"
 Write-Step "Starting local Spring microservices..."
 Invoke-LoggedScript -ScriptPath (Join-Path $PSScriptRoot "start-local-services.ps1") -Name "start-local-services"
 
+Wait-HttpReady -Name "Gateway" -Url "http://localhost:8080/actuator/health"
+Wait-HttpReady -Name "Frontend" -Url "http://localhost:3000"
+
 Write-Step "VPLMQA local stack start command completed."
 Write-Step "ALL SERVICES ARE READY - go to the app: http://localhost:3000"
 Write-Step "Frontend: http://localhost:3000"
 Write-Step "Gateway:  http://localhost:8080"
 Write-Step "Eureka:   http://localhost:8761"
+} catch {
+    Write-Step "STARTUP FAILED: $($_.Exception.Message)"
+    exit 1
+}

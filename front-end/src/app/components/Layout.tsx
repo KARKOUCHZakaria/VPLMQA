@@ -1,7 +1,6 @@
 import { Outlet, Link, useLocation } from "react-router";
 import {
   LayoutDashboard,
-  FileCode,
   TestTube,
   Ticket,
   BarChart3,
@@ -24,8 +23,7 @@ import { Badge } from "./ui/badge";
 import { Toaster } from "./ui/sonner";
 
 const navigation = [
-  { name: "Dashboard", path: "/", icon: LayoutDashboard },
-  { name: "Design to Implement", path: "/design-to-implement", icon: FileCode },
+  { name: "Dashboard", path: "/home", icon: LayoutDashboard },
   { name: "Projects", path: "/projects", icon: FolderKanban },
   { name: "Tests", path: "/tests", icon: TestTube },
   { name: "Tickets", path: "/tickets", icon: Ticket },
@@ -266,3 +264,4 @@ export function Layout() {
     </>
   );
 }
+

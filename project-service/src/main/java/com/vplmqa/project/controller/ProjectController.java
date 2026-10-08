@@ -149,6 +149,12 @@ public class ProjectController {
 		projectAutomationService.startWebPageWorkflow(id, created.id());
 		return ResponseEntity.ok(ApiResponse.ok(created, "Page saved; extraction and comparison started."));
 	}
+	@PutMapping("/{id}/pages/{pageId}")
+	public ResponseEntity<ApiResponse<PageResponse>> updatePage(@PathVariable UUID id,
+															 @PathVariable UUID pageId,
+															 @Valid @RequestBody PageRequest request) {
+		return ResponseEntity.ok(ApiResponse.ok(pageService.updatePage(id, pageId, request)));
+	}
 
 	/**
 	 * Deletes a page from a project.

@@ -82,6 +82,22 @@ public class PageService {
      * @param pageId page id
      */
     @Transactional
+    public PageResponse updatePage(UUID projectId, UUID pageId, PageRequest request) {
+        Project project = findProject(projectId);
+        Page page = findPage(pageId);
+        if (!projectId.equals(page.getProject().getId())) {
+            throw new EntityNotFoundException("Page not found for project");
+        }
+        if (page.getFigmaObjectPath() != null && !page.getFigmaObjectPath().isBlank()) {
+            throw new IllegalStateException("Figma pages are managed from the imported design.");
+        }
+        page.setName(request.name().trim());
+        page.setPath(normalizePath(request.path()));
+        page.setUrl(joinUrl(project.getBaseUrl(), page.getPath()));
+        page.setScanStatus("PENDING");
+        return projectMapper.toPageResponse(pageRepository.save(page));
+    }
+    @Transactional
     public void deletePage(UUID projectId, UUID pageId) {
         Page page = findPage(pageId);
         if (page.getProject() == null || !projectId.equals(page.getProject().getId())) {
@@ -132,5 +148,15 @@ public class PageService {
 
     private String normalizeUrl(String value) {
         return value == null ? "" : value.trim().replaceAll("/+$", "").toLowerCase();
+    }
+
+    private String normalizePath(String value) {
+        String path = value == null ? "/" : value.trim();
+        return path.startsWith("/") ? path : "/" + path;
+    }
+
+    private String joinUrl(String baseUrl, String path) {
+        String base = baseUrl == null ? "" : baseUrl.trim().replaceAll("/+$", "");
+        return base + normalizePath(path);
     }
 }

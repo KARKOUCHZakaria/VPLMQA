@@ -1,5 +1,6 @@
 package com.vplmqa.ticket.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import java.time.Instant;
@@ -9,6 +10,7 @@ import java.util.UUID;
 @Table(name = "ticket_attachments")
 public class TicketAttachment {
     @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "ticket_id", nullable = false) private Ticket ticket;
     @Column(name = "file_name", nullable = false) private String fileName;
     @Column(name = "storage_url", nullable = false) private String storageUrl;

@@ -8,6 +8,7 @@ import com.vplmqa.project.entity.Project;
 import com.vplmqa.project.enumtype.ProjectStatusEnum;
 import com.vplmqa.project.event.ProjectCreatedEvent;
 import com.vplmqa.project.mapper.ProjectMapper;
+import com.vplmqa.project.repository.PageRepository;
 import com.vplmqa.project.repository.ProjectRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -25,6 +26,7 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final ProjectMapper projectMapper;
+    private final PageRepository pageRepository;
     private final KafkaTemplate<String, ProjectCreatedEvent> kafkaTemplate;
 
     /**
@@ -36,9 +38,11 @@ public class ProjectService {
      */
     public ProjectService(ProjectRepository projectRepository,
                           ProjectMapper projectMapper,
+                          PageRepository pageRepository,
                           KafkaTemplate<String, ProjectCreatedEvent> kafkaTemplate) {
         this.projectRepository = projectRepository;
         this.projectMapper = projectMapper;
+        this.pageRepository = pageRepository;
         this.kafkaTemplate = kafkaTemplate;
     }
 
@@ -93,6 +97,7 @@ public class ProjectService {
             project.setFigmaTokenEncrypted(request.figmaTokenEncrypted());
         }
         project.setBaseUrl(request.baseUrl());
+        synchronizeWebPageUrls(project);
         if (request.organizationId() != null) {
             project.setOrganizationId(request.organizationId());
         }
@@ -119,7 +124,10 @@ public class ProjectService {
      */
     @Transactional(readOnly = true)
     public List<ProjectResponse> getProjectsByUser(UUID userId) {
-        return projectRepository.findByCreatedBy(userId).stream().map(projectMapper::toProjectResponse).toList();
+        return projectRepository.findByCreatedBy(userId).stream()
+                .filter(project -> project.getStatus() != ProjectStatusEnum.ARCHIVED)
+                .map(projectMapper::toProjectResponse)
+                .toList();
     }
 
     /**
@@ -135,5 +143,15 @@ public class ProjectService {
 
     private Project findProject(UUID id) {
         return projectRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Project not found"));
+    }
+    private void synchronizeWebPageUrls(Project project) {
+        String baseUrl = project.getBaseUrl() == null ? "" : project.getBaseUrl().trim().replaceAll("/+$", "");
+        pageRepository.findByProjectId(project.getId()).stream()
+                .filter(page -> page.getFigmaObjectPath() == null || page.getFigmaObjectPath().isBlank())
+                .forEach(page -> {
+                    String path = page.getPath() == null || page.getPath().isBlank() ? "/" : page.getPath().trim();
+                    page.setPath(path.startsWith("/") ? path : "/" + path);
+                    page.setUrl(baseUrl + page.getPath());
+                });
     }
 }

@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router";
 import {
   LayoutDashboard,
-  FileCode,
   TestTube,
   Ticket,
   BarChart3,
@@ -33,16 +32,6 @@ const apps = [
   },
   {
     id: 2,
-    name: "Design Comparison",
-    path: "/design-to-implement",
-    icon: FileCode,
-    gradient: "from-[#0891B2] to-[#22D3EE]",
-    description: "Design to Implementation",
-    active: true,
-    badge: { count: 8, color: "bg-info" },
-  },
-  {
-    id: 3,
     name: "E2E Tests",
     path: "/tests",
     icon: TestTube,
@@ -52,7 +41,7 @@ const apps = [
     badge: { count: 3, color: "bg-warning", pulse: true },
   },
   {
-    id: 4,
+    id: 3,
     name: "Tickets",
     path: "/tickets",
     icon: Ticket,
@@ -62,7 +51,7 @@ const apps = [
     badge: { count: 23, color: "bg-error" },
   },
   {
-    id: 5,
+    id: 4,
     name: "Analytics",
     path: "/analysis",
     icon: BarChart3,
@@ -72,7 +61,7 @@ const apps = [
     badge: null,
   },
   {
-    id: 6,
+    id: 5,
     name: "Reports",
     path: "/reports",
     icon: FileText,
@@ -82,7 +71,7 @@ const apps = [
     badge: null,
   },
   {
-    id: 7,
+    id: 6,
     name: "Settings",
     path: "/settings",
     icon: Settings,
@@ -92,7 +81,7 @@ const apps = [
     badge: null,
   },
   {
-    id: 8,
+    id: 7,
     name: "Projects",
     path: "/projects",
     icon: FolderKanban,
@@ -102,7 +91,7 @@ const apps = [
     badge: null,
   },
   {
-    id: 9,
+    id: 8,
     name: "AI Assistant",
     path: "#",
     icon: Sparkles,
@@ -298,3 +287,5 @@ export function Home() {
     </div>
   );
 }
+
+

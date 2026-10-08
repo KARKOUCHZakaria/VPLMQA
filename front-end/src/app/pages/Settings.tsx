@@ -7,20 +7,13 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Switch } from "../components/ui/switch";
 import { Separator } from "../components/ui/separator";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Plus, Trash2, FileCode, Clock, KeyRound, ChevronRight, Loader2, Cloud, Users, CheckCircle2 } from "lucide-react";
+import { Clock, KeyRound, ChevronRight, Loader2, Cloud, Users, CheckCircle2 } from "lucide-react";
 import { Badge } from "../components/ui/badge";
 import { api } from "../utils/api";
 import { toast } from "sonner";
 import { Toaster } from "../components/ui/sonner";
 import { ticketApi, type AzureDevOpsMember } from "../utils/ticketApi";
-
-interface Page {
-  id: string;
-  name: string;
-  url: string;
-}
 
 const azureMembersCacheKey = (projectId: string) => `vplmqa.azureMembers.${projectId}`;
 
@@ -40,19 +33,11 @@ const cacheAzureMembers = (projectId: string, members: AzureDevOpsMember[]) => {
 
 export function Settings() {
   const navigate = useNavigate();
-  const [figmaToken, setFigmaToken] = useState("");
-  const [figmaUrl, setFigmaUrl] = useState("");
-  const [appUrl, setAppUrl] = useState("https://myapp.com");
-  const [designLoaded, setDesignLoaded] = useState(false);
-  const [pages, setPages] = useState<Page[]>([]);
-  const [newPageName, setNewPageName] = useState("");
-  const [newPageUrl, setNewPageUrl] = useState("");
   const [scheduleType, setScheduleType] = useState("daily");
   const [customInterval, setCustomInterval] = useState("1");
   const [dailyTime, setDailyTime] = useState("06:00");
   const [runTestsOnDeploy, setRunTestsOnDeploy] = useState(true);
   const [aiInsights, setAiInsights] = useState(true);
-  const [screenshotComparison, setScreenshotComparison] = useState(true);
   const [testTimeoutSeconds, setTestTimeoutSeconds] = useState("30");
   const [actionDelayMs, setActionDelayMs] = useState("320");
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -65,7 +50,6 @@ export function Settings() {
   const [slackWebhook, setSlackWebhook] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
   const [autoTicket, setAutoTicket] = useState(true);
-  const [projectName, setProjectName] = useState("");
   const [azureOrganization, setAzureOrganization] = useState("");
   const [azureProject, setAzureProject] = useState("");
   const [azureWorkItemType, setAzureWorkItemType] = useState("Bug");
@@ -92,18 +76,8 @@ export function Settings() {
         }
         
         setProjectId(project.id);
-        setProjectName(project.name || "Current project");
-        setFigmaUrl(project.figmaFileUrl || "");
-        setAppUrl(project.baseUrl || "https://myapp.com");
         setAzureMembers(readCachedAzureMembers(project.id));
-
-        // 2. Fetch pages for this project
-        const projectPages = await api.get<any[]>(`/api/v1/projects/${project.id}/pages`);
-        if (projectPages.length > 0) {
-          setPages(projectPages.map(p => ({ id: p.id, name: p.name, url: p.url })));
-        }
-
-        // 3. Fetch settings for this project
+        // Load the platform settings for this project
         const settings = await api.get<any>(`/api/v1/projects/${project.id}/settings`);
         if (settings) {
           setSlackWebhook(settings.slackWebhook || "");
@@ -111,7 +85,6 @@ export function Settings() {
           setAutoTicket(settings.autoTicketCreation);
           setRunTestsOnDeploy(settings.runTestsOnDeploy ?? true);
           setAiInsights(settings.aiInsights ?? true);
-          setScreenshotComparison(settings.screenshotComparison ?? true);
           setTestTimeoutSeconds(String(settings.testTimeoutSeconds ?? 30));
           setActionDelayMs(String(settings.actionDelayMs ?? 320));
           setScheduleType(settings.scheduleType || "daily");
@@ -159,45 +132,11 @@ export function Settings() {
     loadData();
   }, []);
 
-  const handleLoadDesign = () => {
-    setDesignLoaded(true);
-  };
-
-  const handleAddPage = async () => {
-    if (!projectId || !newPageName || !newPageUrl) return;
-    try {
-      setLoading(true);
-      const newPage = await api.post<any>(`/api/v1/projects/${projectId}/pages`, {
-        name: newPageName,
-        url: newPageUrl,
-        path: newPageUrl
-      });
-      setPages([...pages, { id: newPage.id, name: newPage.name, url: newPage.url }]);
-      setNewPageName("");
-      setNewPageUrl("");
-      toast.success("Page added successfully!");
-    } catch (err: any) {
-      toast.error("Failed to add page", {
-        description: err.message,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleSave = async () => {
     if (!projectId) return;
     try {
       setLoading(true);
-      // 1. Update project
-      await api.put(`/api/v1/projects/${projectId}`, {
-        name: projectName,
-        description: "Project configuration updated from settings",
-        figmaFileUrl: figmaUrl,
-        baseUrl: appUrl
-      });
-
-      // 2. Update settings
+      // Update settings
       await api.put(`/api/v1/projects/${projectId}/settings`, {
         notificationEmail: adminEmail,
         slackWebhook: slackWebhook,
@@ -209,7 +148,6 @@ export function Settings() {
         weeklySummaryReports,
         runTestsOnDeploy,
         aiInsights,
-        screenshotComparison,
         testTimeoutSeconds: Number(testTimeoutSeconds) || 30,
         actionDelayMs: Number(actionDelayMs) || 320,
         scheduleType,
@@ -223,22 +161,6 @@ export function Settings() {
     } catch (err: any) {
       toast.error("Failed to save changes", {
         description: err.message || "An error occurred.",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeletePage = async (id: string) => {
-    if (!projectId) return;
-    try {
-      setLoading(true);
-      await api.delete(`/api/v1/projects/${projectId}/pages/${id}`);
-      setPages(pages.filter((page) => page.id !== id));
-      toast.success("Page deleted");
-    } catch (err: any) {
-      toast.error("Failed to delete page", {
-        description: err.message || "The page was not deleted from the backend.",
       });
     } finally {
       setLoading(false);
@@ -264,11 +186,21 @@ export function Settings() {
         enabled: azureEnabled,
         personalAccessToken: azurePat.trim() || undefined,
       });
+      setAzureOrganization(saved.organization);
+      setAzureProject(saved.azureProject);
+      setAzureWorkItemType(saved.workItemType || "Bug");
+      setAzureAreaPath(saved.areaPath || "");
+      setAzureEnabled(saved.enabled);
       setAzureCredentialStored(saved.credentialStored);
       setAzurePat("");
+      setAzureMembers([]);
+      localStorage.removeItem(azureMembersCacheKey(projectId));
       toast.success("Azure DevOps connection saved", {
         description: saved.credentialStored ? "The PAT remains stored securely in Vault." : "Connection settings were saved.",
       });
+      if (!saved.enabled || !saved.credentialStored) {
+        return;
+      }
       try {
         const members = await ticketApi.getAzureDevOpsMembers(projectId);
         setAzureMembers(members);
@@ -316,50 +248,6 @@ export function Settings() {
         <h2 className="text-2xl font-bold text-foreground">Settings</h2>
         <p className="text-muted-foreground mt-1">Manage your VQA platform configuration</p>
       </div>
-
-      {/* Figma Configuration */}
-      <GlassCard className="p-6">
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold">Figma Configuration</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Configure your Figma API token and file URL to extract design tokens
-          </p>
-        </div>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="figma-token" className="text-foreground">Figma API Token</Label>
-            <Input
-              id="figma-token"
-              type="password"
-              placeholder="Enter your Figma API token"
-              value={figmaToken}
-              onChange={(e) => setFigmaToken(e.target.value)}
-              className="bg-card border-border text-foreground placeholder:text-muted-foreground"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="figma-url" className="text-foreground">Figma File URL</Label>
-            <Input
-              id="figma-url"
-              type="url"
-              placeholder="https://www.figma.com/file/..."
-              value={figmaUrl}
-              onChange={(e) => setFigmaUrl(e.target.value)}
-              className="bg-card border-border text-foreground placeholder:text-muted-foreground"
-            />
-          </div>
-          <GradientButton onClick={handleLoadDesign} variant="primary">
-            <FileCode className="w-4 h-4 mr-2" />
-            Load Design Tokens
-          </GradientButton>
-          {designLoaded && (
-            <Badge className="ml-2 bg-green-600 text-white hover:bg-green-600">
-              Design Loaded Successfully
-            </Badge>
-          )}
-        </div>
-      </GlassCard>
-
       {/* Security Settings */}
       <GlassCard className="p-6">
         <div className="mb-4">
@@ -384,30 +272,6 @@ export function Settings() {
           <ChevronRight className="w-5 h-5 text-muted-foreground" />
         </button>
       </GlassCard>
-
-      {/* Application Configuration */}
-      <GlassCard className="p-6">
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold">Application Configuration</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Configure your application URL for testing
-          </p>
-        </div>
-        <div>
-          <div className="space-y-2">
-            <Label htmlFor="app-url" className="text-foreground">Principal Application URL</Label>
-            <Input
-              id="app-url"
-              type="url"
-              placeholder="https://myapp.com"
-              value={appUrl}
-              onChange={(e) => setAppUrl(e.target.value)}
-              className="bg-card border-border text-foreground placeholder:text-muted-foreground"
-            />
-          </div>
-        </div>
-      </GlassCard>
-
       {/* Azure DevOps Integration */}
       <GlassCard className="p-6">
         <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
@@ -418,7 +282,7 @@ export function Settings() {
             <div>
               <h3 className="text-lg font-semibold">Azure DevOps</h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                Send validated tickets to the Azure project linked to {projectName || "this project"}.
+                Send validated tickets to the Azure project linked to the current VPLMQA project.
               </p>
             </div>
           </div>
@@ -534,70 +398,6 @@ export function Settings() {
           </div>
         )}
       </GlassCard>
-
-      {/* Pages Configuration */}
-      <GlassCard className="p-6">
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold">Pages Configuration</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Add and manage application pages to test
-          </p>
-        </div>
-        <div className="space-y-4">
-          <div className="border border-border rounded-lg overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border hover:bg-card/50">
-                  <TableHead className="text-foreground">Page Name</TableHead>
-                  <TableHead className="text-foreground">Page URL</TableHead>
-                  <TableHead className="w-20 text-foreground">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pages.map((page) => (
-                  <TableRow key={page.id} className="border-border hover:bg-card/50">
-                    <TableCell className="font-medium text-foreground">{page.name}</TableCell>
-                    <TableCell className="font-mono text-sm text-muted-foreground">{page.url}</TableCell>
-                    <TableCell>
-                      <GradientButton
-                        variant="danger"
-                        size="sm"
-                        onClick={() => handleDeletePage(page.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </GradientButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Page name (e.g., Settings)"
-                value={newPageName}
-                onChange={(e) => setNewPageName(e.target.value)}
-                className="bg-card border-border text-foreground placeholder:text-muted-foreground"
-              />
-            </div>
-            <div className="flex-1">
-              <Input
-                placeholder="Page URL (e.g., /settings)"
-                value={newPageUrl}
-                onChange={(e) => setNewPageUrl(e.target.value)}
-                className="bg-card border-border text-foreground placeholder:text-muted-foreground"
-              />
-            </div>
-            <GradientButton onClick={handleAddPage} variant="primary">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Page
-            </GradientButton>
-          </div>
-        </div>
-      </GlassCard>
-
       {/* General Settings */}
       <GlassCard className="p-6">
         <div className="mb-4">
@@ -605,16 +405,7 @@ export function Settings() {
           <p className="text-sm text-muted-foreground mt-1">Configure basic platform settings</p>
         </div>
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="project-name" className="text-foreground">Project Name</Label>
-            <Input
-              id="project-name"
-              value={projectName}
-              onChange={(event) => setProjectName(event.target.value)}
-              className="bg-card border-border text-foreground"
-            />
-          </div>
-          <div className="space-y-2">
+<div className="space-y-2">
             <Label htmlFor="admin-email" className="text-foreground">Admin Email</Label>
             <Input
               id="admin-email"
@@ -661,14 +452,6 @@ export function Settings() {
               <p className="text-sm text-muted-foreground">Use AI to generate testing recommendations</p>
             </div>
             <Switch checked={aiInsights} onCheckedChange={setAiInsights} />
-          </div>
-          <Separator className="bg-card" />
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="text-foreground">Screenshot comparison</Label>
-              <p className="text-sm text-muted-foreground">Capture and compare UI screenshots</p>
-            </div>
-            <Switch checked={screenshotComparison} onCheckedChange={setScreenshotComparison} />
           </div>
           <Separator className="bg-card" />
           <div className="space-y-2">
@@ -892,7 +675,7 @@ export function Settings() {
       </GlassCard>
 
       <div className="flex justify-end gap-3">
-        <GradientButton variant="ghost" onClick={() => navigate("/")} disabled={loading}>
+        <GradientButton variant="ghost" onClick={() => navigate("/home")} disabled={loading}>
           Cancel
         </GradientButton>
         <GradientButton variant="primary" onClick={handleSave} disabled={loading}>

@@ -15,7 +15,7 @@ type ReportRow = {
   date: string;
   type: string;
   size: string;
-  payload: unknown;
+  section: "execution" | "issues" | "quality";
 };
 
 const emptyMetrics: MetricsResponse = {
@@ -25,8 +25,67 @@ const emptyMetrics: MetricsResponse = {
   healthScore: 0,
 };
 
-const downloadJson = (filename: string, payload: unknown) => {
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+const pdfText = (value: unknown) => String(value ?? "")
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .replace(/[^\x20-\x7E]/g, "?")
+  .replace(/([\\()])/g, "\\$1");
+
+const splitPdfLines = (value: string, limit = 82) => {
+  const words = value.split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let line = "";
+  words.forEach((word) => {
+    const candidate = line ? `${line} ${word}` : word;
+    if (candidate.length > limit && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = candidate;
+    }
+  });
+  if (line) lines.push(line);
+  return lines;
+};
+
+const downloadPdf = (filename: string, lines: string[]) => {
+  const pageLines = 45;
+  const pages = Array.from({ length: Math.max(1, Math.ceil(lines.length / pageLines)) }, (_, index) =>
+    lines.slice(index * pageLines, (index + 1) * pageLines),
+  );
+  const fontObject = 3 + pages.length * 2;
+  const objects = [
+    "<< /Type /Catalog /Pages 2 0 R >>",
+    `<< /Type /Pages /Kids [${pages.map((_, index) => `${3 + index * 2} 0 R`).join(" ")}] /Count ${pages.length} >>`,
+  ];
+
+  pages.forEach((page, index) => {
+    const pageObject = 3 + index * 2;
+    const contentObject = pageObject + 1;
+    const stream = page.map((line, lineIndex) => {
+      const y = 790 - lineIndex * 16;
+      const fontSize = lineIndex === 0 ? 18 : 10;
+      return `BT /F1 ${fontSize} Tf 56 ${y} Td (${pdfText(line)}) Tj ET`;
+    }).join("\n");
+    objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 ${fontObject} 0 R >> >> /Contents ${contentObject} 0 R >>`);
+    objects.push(`<< /Length ${new TextEncoder().encode(stream).length} >>\nstream\n${stream}\nendstream`);
+  });
+  objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+
+  let pdf = "%PDF-1.4\n";
+  const offsets = [0];
+  objects.forEach((object, index) => {
+    offsets.push(new TextEncoder().encode(pdf).length);
+    pdf += `${index + 1} 0 obj\n${object}\nendobj\n`;
+  });
+  const xref = new TextEncoder().encode(pdf).length;
+  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  offsets.slice(1).forEach((offset) => {
+    pdf += `${String(offset).padStart(10, "0")} 00000 n \n`;
+  });
+  pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+
+  const blob = new Blob([pdf], { type: "application/pdf" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -34,7 +93,6 @@ const downloadJson = (filename: string, payload: unknown) => {
   link.click();
   URL.revokeObjectURL(url);
 };
-
 const formatDate = (value?: string) =>
   value ? new Date(value).toLocaleString() : new Date().toLocaleString();
 
@@ -80,60 +138,68 @@ export function Reports() {
 
   const selectedProject = projects.find((project) => project.id === selectedProjectId);
 
-  const reports = useMemo<ReportRow[]>(() => {
-    const executionPayload = {
-      project: selectedProject,
-      generatedAt: new Date().toISOString(),
-      executions,
-      features,
-    };
-    const ticketPayload = {
-      project: selectedProject,
-      generatedAt: new Date().toISOString(),
-      tickets,
-    };
-    const qualityPayload = {
-      project: selectedProject,
-      generatedAt: new Date().toISOString(),
-      metrics,
-      executionCount: executions.length,
-      ticketCount: tickets.length,
-    };
+  const reports = useMemo<ReportRow[]>(() => [
+    {
+      name: "Live Test Execution Report",
+      date: formatDate(executions[0]?.createdAt),
+      type: "PDF",
+      size: `${executions.length} runs`,
+      section: "execution",
+    },
+    {
+      name: "Live Issue Summary",
+      date: formatDate(tickets[0]?.createdAt),
+      type: "PDF",
+      size: `${tickets.length} tickets`,
+      section: "issues",
+    },
+    {
+      name: "Live Quality Metrics",
+      date: formatDate(),
+      type: "PDF",
+      size: `${Math.round(metrics.healthScore)} health`,
+      section: "quality",
+    },
+  ], [executions, metrics.healthScore, tickets]);
 
-    return [
-      {
-        name: "Live Test Execution Report",
-        date: formatDate(executions[0]?.createdAt),
-        type: "JSON",
-        size: `${executions.length} runs`,
-        payload: executionPayload,
-      },
-      {
-        name: "Live Issue Summary",
-        date: formatDate(tickets[0]?.createdAt),
-        type: "JSON",
-        size: `${tickets.length} tickets`,
-        payload: ticketPayload,
-      },
-      {
-        name: "Live Quality Metrics",
-        date: formatDate(),
-        type: "JSON",
-        size: `${Math.round(metrics.healthScore)} health`,
-        payload: qualityPayload,
-      },
+  const buildPdfLines = (title: string, section: "full" | ReportRow["section"]) => {
+    const lines = [
+      title,
+      `Project: ${selectedProject?.name || "Not selected"}`,
+      `Generated: ${formatDate()}`,
+      "",
     ];
-  }, [executions, features, metrics, selectedProject, tickets]);
+    const includeQuality = section === "full" || section === "quality";
+    const includeExecutions = section === "full" || section === "execution";
+    const includeIssues = section === "full" || section === "issues";
 
-  const fullPayload = {
-    project: selectedProject,
-    generatedAt: new Date().toISOString(),
-    metrics,
-    features,
-    executions,
-    tickets,
+    if (includeQuality) {
+      lines.push("QUALITY METRICS", `Health score: ${Math.round(metrics.healthScore)}%`, `Test pass rate: ${Math.round(metrics.testPassRate)}%`, `Token coverage: ${Math.round(metrics.tokenCoverage)}%`, `Mismatch rate: ${Math.round(metrics.mismatchRate)}%`, "");
+    }
+    if (includeExecutions) {
+      lines.push("RECENT EXECUTIONS");
+      if (!executions.length) lines.push("No execution is available for this report.");
+      executions.slice(0, 10).forEach((execution) => {
+        lines.push(...splitPdfLines(`Execution ${execution.id.slice(0, 8)} | ${execution.status} | ${execution.executionTimeMs} ms | ${formatDate(execution.createdAt)}`));
+        if (execution.errorMessage) lines.push(...splitPdfLines(`Error: ${execution.errorMessage}`));
+      });
+      lines.push("");
+    }
+    if (includeIssues) {
+      lines.push("ISSUES AND TICKETS");
+      if (!tickets.length) lines.push("No ticket is available for this report.");
+      tickets.slice(0, 10).forEach((ticket) => {
+        lines.push(...splitPdfLines(`${ticket.status} | ${ticket.severity} | ${ticket.title}`));
+      });
+      lines.push("");
+    }
+    if (section === "full") {
+      lines.push("FEATURES");
+      if (!features.length) lines.push("No feature is available for this report.");
+      features.slice(0, 10).forEach((feature) => lines.push(...splitPdfLines(`${feature.status} | ${feature.name}`)));
+    }
+    return lines;
   };
-
   return (
     <div className="min-h-screen bg-background">
       <TopBar title="Reports" />
@@ -157,7 +223,7 @@ export function Reports() {
               <RefreshCw className="w-4 h-4 mr-2" />
               Refresh
             </GradientButton>
-            <GradientButton variant="primary" onClick={() => downloadJson("vplmqa-full-live-report.json", fullPayload)}>
+            <GradientButton variant="primary" onClick={() => downloadPdf("vplmqa-full-live-report.pdf", buildPdfLines("VPLMQA - Quality Assurance Report", "full"))}>
               <FileText className="w-4 h-4 mr-2" />
               Generate Report
             </GradientButton>
@@ -175,7 +241,7 @@ export function Reports() {
                   key={report.name}
                   variant="ghost"
                   className="w-full justify-start"
-                  onClick={() => downloadJson(`${report.name.toLowerCase().replaceAll(" ", "-")}.json`, report.payload)}
+                  onClick={() => downloadPdf(`${report.name.toLowerCase().replaceAll(" ", "-")}.pdf`, buildPdfLines(report.name, report.section))}
                 >
                   <Download className="w-4 h-4 mr-2" />
                   {report.name}
@@ -210,7 +276,7 @@ export function Reports() {
                       </div>
                     </div>
                   </div>
-                  <GradientButton variant="ghost" size="sm" onClick={() => downloadJson(`${report.name.toLowerCase().replaceAll(" ", "-")}.json`, report.payload)}>
+                  <GradientButton variant="ghost" size="sm" onClick={() => downloadPdf(`${report.name.toLowerCase().replaceAll(" ", "-")}.pdf`, buildPdfLines(report.name, report.section))}>
                     <Download className="w-4 h-4" />
                   </GradientButton>
                 </div>

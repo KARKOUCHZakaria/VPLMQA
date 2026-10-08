@@ -1,4 +1,4 @@
-﻿import ast
+import ast
 import base64
 import hashlib
 import html
@@ -577,10 +577,7 @@ class ExecutionService:
         parsed = urllib.parse.urlsplit(cdp_url)
         if not parsed.hostname:
             return cdp_url
-        if parsed.hostname.lower() == "host.docker.internal" and (parsed.port or 80) == 9222:
-            return urllib.parse.urlunsplit(
-                (parsed.scheme, "192.168.65.254:9222", parsed.path, parsed.query, parsed.fragment)
-            )
+
         address = socket.gethostbyname(parsed.hostname)
         port = f":{parsed.port}" if parsed.port else ""
         return urllib.parse.urlunsplit(
@@ -6654,4 +6651,5 @@ def model_for_step(step: Dict[str, Any]) -> str:
     if any(term in step["normalized_text"].lower() for term in complex_terms):
         return "gemini-flash"
     return "gemini-flash"
+
 

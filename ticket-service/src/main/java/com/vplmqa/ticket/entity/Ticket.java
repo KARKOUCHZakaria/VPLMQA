@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -22,6 +24,10 @@ public class Ticket {
     @Column(name = "component_canonical_name") private String componentCanonicalName;
     @Column(name = "component_html_id") private String componentHtmlId;
     @Column(name = "assigned_to") private String assignedTo;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "ticket_tags", joinColumns = @JoinColumn(name = "ticket_id"))
+    @Column(name = "tag", nullable = false, length = 80)
+    private Set<String> tags = new LinkedHashSet<>();
     @Column(name = "azure_work_item_id") private Integer azureWorkItemId;
     @Column(name = "azure_work_item_url") private String azureWorkItemUrl;
     @Column(name = "azure_sync_status", nullable = false) private String azureSyncStatus = "NOT_CONFIGURED";
@@ -39,6 +45,7 @@ public class Ticket {
     public String getComponentCanonicalName(){return componentCanonicalName;} public void setComponentCanonicalName(String componentCanonicalName){this.componentCanonicalName=componentCanonicalName;}
     public String getComponentHtmlId(){return componentHtmlId;} public void setComponentHtmlId(String componentHtmlId){this.componentHtmlId=componentHtmlId;}
     public String getAssignedTo(){return assignedTo;} public void setAssignedTo(String assignedTo){this.assignedTo=assignedTo;}
+    public Set<String> getTags(){return tags;} public void setTags(Set<String> tags){this.tags = tags == null ? new LinkedHashSet<>() : new LinkedHashSet<>(tags);}
     public Integer getAzureWorkItemId(){return azureWorkItemId;} public void setAzureWorkItemId(Integer azureWorkItemId){this.azureWorkItemId=azureWorkItemId;}
     public String getAzureWorkItemUrl(){return azureWorkItemUrl;} public void setAzureWorkItemUrl(String azureWorkItemUrl){this.azureWorkItemUrl=azureWorkItemUrl;}
     public String getAzureSyncStatus(){return azureSyncStatus;} public void setAzureSyncStatus(String azureSyncStatus){this.azureSyncStatus=azureSyncStatus;}

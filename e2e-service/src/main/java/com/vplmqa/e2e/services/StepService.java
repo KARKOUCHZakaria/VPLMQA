@@ -27,9 +27,19 @@ public class StepService {
         this.scenarioRepository = scenarioRepository;
     }
 
-    public StepResponse createStep(UUID scenarioId, CreateStepRequest request) {
+    public synchronized StepResponse createStep(UUID scenarioId, CreateStepRequest request) {
         Scenario scenario = scenarioRepository.findById(scenarioId)
             .orElseThrow(() -> new RuntimeException("Scenario not found"));
+
+        Step duplicate = stepRepository.findByScenarioId(scenarioId).stream()
+            .filter(candidate -> java.util.Objects.equals(candidate.getSequenceOrder(), request.sequenceOrder()))
+            .filter(candidate -> candidate.getType() == request.type())
+            .filter(candidate -> normalize(candidate.getText()).equals(normalize(request.text())))
+            .findFirst()
+            .orElse(null);
+        if (duplicate != null) {
+            return mapToResponse(duplicate);
+        }
 
         Step step = new Step();
         step.setScenario(scenario);
@@ -42,6 +52,9 @@ public class StepService {
         return mapToResponse(step);
     }
 
+    private String normalize(String value) {
+        return value == null ? "" : value.trim();
+    }
     public StepResponse updateStep(UUID id, UpdateStepRequest request) {
         Step step = stepRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Step not found"));
@@ -88,3 +101,5 @@ public class StepService {
         );
     }
 }
+
+

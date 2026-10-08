@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Download, FileInput, FileText, Plus, X } from "lucide-react";
 import { projectApi, type Project } from "../../utils/projectApi";
+import { createFeature, createScenario, createStep } from "../../utils/e2eApi";
 import { toast } from "sonner";
 
 type Step = {
@@ -32,6 +33,8 @@ export function FeatureBuilder({ onSave }: { onSave?: (feature: Feature) => void
   const [projectId, setProjectId] = useState("");
   const [projects, setProjects] = useState<Project[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [savingFeatureIds, setSavingFeatureIds] = useState<string[]>([]);
+  const savingFeatureIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     projectApi.getProjects().then(setProjects).catch(() => setProjects([]));
@@ -99,6 +102,62 @@ export function FeatureBuilder({ onSave }: { onSave?: (feature: Feature) => void
     return importedFeature;
   };
 
+  const handleConfirmAndSave = async (feature: Feature) => {
+    if (!feature.name.trim()) {
+      toast.error("A feature name is required.");
+      return;
+    }
+    if (feature.targetMode === "PROJECT" && !feature.projectId) {
+      toast.error("Select a project before saving this feature.");
+      return;
+    }
+    if (!feature.scenarios.length || feature.scenarios.some((scenario) => !scenario.name.trim() || !scenario.steps.length || scenario.steps.some((step) => !step.description.trim()))) {
+      toast.error("Each saved feature needs named scenarios with complete steps.");
+      return;
+    }
+
+    if (savingFeatureIdsRef.current.has(feature.id)) {
+      return;
+    }
+
+    try {
+      savingFeatureIdsRef.current.add(feature.id);
+      setSavingFeatureIds((current) => current.includes(feature.id) ? current : [...current, feature.id]);
+      const savedFeature = await createFeature({
+        name: feature.name.trim(),
+        description: "Created with Feature Builder",
+        gherkinContent: buildGherkin(feature),
+        projectId: feature.targetMode === "PROJECT" ? feature.projectId : undefined,
+        targetMode: feature.targetMode,
+      });
+
+      for (const [scenarioIndex, scenario] of feature.scenarios.entries()) {
+        const savedScenario = await createScenario(savedFeature.id, {
+          name: scenario.name.trim(),
+          description: scenario.name.trim(),
+          sequenceOrder: scenarioIndex,
+        });
+        for (const [stepIndex, step] of scenario.steps.entries()) {
+          await createStep(savedScenario.id, {
+            type: step.type,
+            text: step.description.trim(),
+            sequenceOrder: stepIndex,
+          });
+        }
+      }
+
+      onSave?.(feature);
+      setFeatures((current) => current.filter((item) => item.id !== feature.id));
+      toast.success("Feature saved", { description: "The feature, its scenarios, and its steps are ready in E2E Tests." });
+    } catch (error) {
+      toast.error("Feature could not be saved", {
+        description: error instanceof Error ? error.message : "The E2E service did not accept the feature.",
+      });
+    } finally {
+      savingFeatureIdsRef.current.delete(feature.id);
+      setSavingFeatureIds((current) => current.filter((id) => id !== feature.id));
+    }
+  };
   const handleExportFeature = (feature: Feature) => {
     const blob = new Blob([buildGherkin(feature)], { type: "text/x-gherkin;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -324,11 +383,13 @@ export function FeatureBuilder({ onSave }: { onSave?: (feature: Feature) => void
                       <Download className="w-4 h-4" />
                       Export .feature
                     </button>
-                    <button 
-                      onClick={() => onSave?.(feature)}
-                      className="bg-primary hover:opacity-90 text-primary-foreground px-4 py-1.5 rounded-md font-medium text-sm transition-colors"
+                    <button
+                      type="button"
+                      onClick={() => void handleConfirmAndSave(feature)}
+                      disabled={savingFeatureIds.includes(feature.id)}
+                      className="bg-primary hover:opacity-90 text-primary-foreground px-4 py-1.5 rounded-md font-medium text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      Confirm & Save
+                      {savingFeatureIds.includes(feature.id) ? "Saving..." : "Confirm & Save"}
                     </button>
                     <button 
                       onClick={() => handleDeleteFeature(feature.id)}
@@ -424,3 +485,6 @@ export function FeatureBuilder({ onSave }: { onSave?: (feature: Feature) => void
     </div>
   );
 }
+
+
+

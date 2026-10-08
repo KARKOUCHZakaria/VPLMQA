@@ -12,9 +12,9 @@ ENV_FILE = ROOT / ".env"
 PORT = int(os.environ.get("E2E_CHROME_LAUNCHER_PORT", "9223"))
 CDP_PORT = int(os.environ.get("E2E_CHROME_DEBUG_PORT", "9222"))
 BIND_ADDRESS = os.environ.get("E2E_CHROME_LAUNCHER_BIND_ADDRESS", "127.0.0.1")
-CDP_ADDRESS = os.environ.get("E2E_CHROME_DEBUG_ADDRESS", "127.0.0.1")
+CDP_ADDRESS = os.environ.get("E2E_CHROME_DEBUG_ADDRESS", "0.0.0.0")
 CDP_PROBE_ADDRESS = "127.0.0.1" if CDP_ADDRESS in {"0.0.0.0", "::"} else CDP_ADDRESS
-DOCKER_CDP_URL = os.environ.get("E2E_BROWSER_CDP_URL", f"http://192.168.65.254:{CDP_PORT}")
+DOCKER_CDP_URL = os.environ.get("E2E_BROWSER_CDP_URL", f"http://host.docker.internal:{CDP_PORT}")
 PROFILE_DIR = Path(os.environ.get("E2E_CHROME_PROFILE_DIR", r"C:\tmp\vplmqa-chrome-profile"))
 PID_FILE = PROFILE_DIR / "runner.pid"
 LOG_FILE = Path(os.environ.get("E2E_CHROME_RUNNER_LOG", r"C:\tmp\vplmqa-e2e-chrome-runner.log"))
@@ -62,6 +62,7 @@ def start_chrome() -> None:
                 str(chrome),
                 f"--remote-debugging-port={CDP_PORT}",
                 f"--remote-debugging-address={CDP_ADDRESS}",
+                "--remote-allow-origins=*",
                 f"--user-data-dir={PROFILE_DIR}",
                 "--ignore-certificate-errors",
                 "--new-window",
@@ -144,3 +145,5 @@ if __name__ == "__main__":
     except Exception as exc:
         log(f"Runner failed to start: {exc}")
         raise
+
+

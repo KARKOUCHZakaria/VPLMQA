@@ -41,7 +41,7 @@ export function TopBar({ title }: TopBarProps) {
   };
 
   const handleHome = () => {
-    navigate("/");
+    navigate("/home");
   };
 
   return (

@@ -39,7 +39,12 @@ public class FeatureService {
         this.objectMapper = objectMapper;
     }
 
-    public FeatureResponse createFeature(CreateFeatureRequest request) {
+    public synchronized FeatureResponse createFeature(CreateFeatureRequest request) {
+        Feature duplicate = findRecentDuplicateFeature(request);
+        if (duplicate != null) {
+            return mapToResponse(duplicate);
+        }
+
         Feature feature = new Feature();
         feature.setName(request.name());
         feature.setDescription(request.description());
@@ -55,6 +60,29 @@ public class FeatureService {
         return mapToResponse(feature);
     }
 
+    private Feature findRecentDuplicateFeature(CreateFeatureRequest request) {
+        String requestedName = request.name() == null ? "" : request.name().trim();
+        String requestedGherkin = normalizeGherkin(request.gherkinContent());
+        UUID requestedProjectId = request.projectId();
+        TargetMode requestedTargetMode = request.targetMode() == null
+            ? (requestedProjectId == null ? TargetMode.EXTERNAL : TargetMode.PROJECT)
+            : request.targetMode();
+        java.time.LocalDateTime cutoff = java.time.LocalDateTime.now().minusMinutes(5);
+
+        return featureRepository.findAll().stream()
+            .filter(feature -> feature.getCreatedAt() != null && feature.getCreatedAt().isAfter(cutoff))
+            .filter(feature -> requestedName.equals((feature.getName() == null ? "" : feature.getName().trim())))
+            .filter(feature -> java.util.Objects.equals(requestedProjectId, feature.getProjectId()))
+            .filter(feature -> requestedTargetMode == feature.getTargetMode())
+            .filter(feature -> requestedGherkin.equals(normalizeGherkin(feature.getGherkinContent())))
+            .sorted(java.util.Comparator.comparing(Feature::getCreatedAt).reversed())
+            .findFirst()
+            .orElse(null);
+    }
+
+    private String normalizeGherkin(String value) {
+        return value == null ? "" : value.replace("\r\n", "\n").replace('\r', '\n').trim();
+    }
     public FeatureResponse getFeature(UUID id) {
         Feature feature = featureRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Feature not found"));
@@ -594,3 +622,5 @@ public class FeatureService {
         );
     }
 }
+
+

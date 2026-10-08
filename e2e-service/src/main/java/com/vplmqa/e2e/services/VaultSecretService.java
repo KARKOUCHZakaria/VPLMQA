@@ -13,6 +13,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
+/**
+ * Stores E2E credentials in Vault under project-scoped aliases.
+ *
+ * <p>Only aliases are listed or returned to clients. The secret value stays in
+ * Vault and is resolved server-side during execution.</p>
+ */
 @Service
 public class VaultSecretService {
     private final RestClient vaultClient;
@@ -26,6 +32,7 @@ public class VaultSecretService {
     }
 
     public String putProjectSecret(UUID projectId, String alias, String value) {
+        // Normalize aliases before using them in a Vault path.
         String normalizedAlias = normalizeAlias(alias);
         vaultClient.post()
                 .uri("/v1/secret/data/vplmqa/projects/{projectId}/e2e/{alias}", projectId, normalizedAlias)

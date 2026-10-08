@@ -24,12 +24,12 @@ function Get-DockerHostAddress {
         }
     }
 
-    return "192.168.65.254"
+    return "host.docker.internal"
 }
 
 $hostAddress = Get-DockerHostAddress
 $launcherBindAddress = if ($env:E2E_CHROME_LAUNCHER_BIND_ADDRESS) { $env:E2E_CHROME_LAUNCHER_BIND_ADDRESS } else { "127.0.0.1" }
-$chromeDebugAddress = if ($env:E2E_CHROME_DEBUG_ADDRESS) { $env:E2E_CHROME_DEBUG_ADDRESS } else { "127.0.0.1" }
+$chromeDebugAddress = if ($env:E2E_CHROME_DEBUG_ADDRESS) { $env:E2E_CHROME_DEBUG_ADDRESS } else { "0.0.0.0" }
 $chromeDebugProbeAddress = if ($chromeDebugAddress -eq "0.0.0.0" -or $chromeDebugAddress -eq "::") { "127.0.0.1" } else { $chromeDebugAddress }
 $dockerCdpAddress = if ($env:E2E_BROWSER_CDP_URL) { $env:E2E_BROWSER_CDP_URL } else { "http://$hostAddress`:$chromeDebugPort" }
 
@@ -70,6 +70,7 @@ function Start-E2EChrome {
         $process = Start-Process $chrome -ArgumentList @(
             "--remote-debugging-port=$chromeDebugPort",
             "--remote-debugging-address=$chromeDebugAddress",
+            "--remote-allow-origins=*",
             "--user-data-dir=$profileDir",
             "--ignore-certificate-errors",
             "--new-window",
@@ -171,3 +172,5 @@ while ($true) {
         $client.Close()
     }
 }
+
+
