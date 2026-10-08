@@ -10,7 +10,11 @@ It does not transfer existing PostgreSQL/MinIO data or configure the VM firewall
 2. Install Python 3.9+ and Docker with Compose supporting `include` and `--wait`.
 3. Check that ports 3000, 8080, 8090 and the infrastructure ports are not occupied
    by another VPLMQA stack. Do not run the local Windows launcher on this VM.
-4. From the repository root, run:
+4. Create a key in [Mistral Studio](https://console.mistral.ai/) under **API Keys**
+   using **Create new key**. Copy it immediately and store it securely; the full
+   key is shown only once. See the
+   [official setup guide](https://docs.mistral.ai/getting-started/quickstarts/studio/activate-and-generate-api-key).
+5. From the repository root, run:
 
 ```sh
 python scripts/deploy-vm.py --public-url http://10.0.0.50:3000

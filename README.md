@@ -77,6 +77,18 @@ not need to replace `localhost` throughout the source code.
 Java, Maven and Node.js do not need to be installed on the VM for this route:
 the application is built in containers.
 
+### Get Your Mistral API Key
+
+1. Sign in or create an account at [Mistral Studio](https://console.mistral.ai/).
+2. Open **API Keys** and select **Create new key**.
+3. Name the key (for example, `VPLMQA test VM`) and create it.
+4. Copy it immediately and keep it in a password manager. The full key is shown
+   only once; if you lose it, create a replacement.
+5. Paste the key into the deployment script's hidden prompt when requested.
+
+See [Mistral's official API-key setup guide](https://docs.mistral.ai/getting-started/quickstarts/studio/activate-and-generate-api-key)
+for account setup and current usage limits. Never commit the key to this repository.
+
 ### First Deployment
 
 ```sh
