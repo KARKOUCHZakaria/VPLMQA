@@ -7,8 +7,6 @@ from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
-from part1_figma_to_design.agents.ml_prediction import MODEL_COMPONENTS, FEATURE_NAMES
-from part1_figma_to_design.graph import build_graph as build_part1_graph
 from part1_figma_to_design.agents.semantic import organize as organize_components, enrich_pages
 from part2_EndToEnd.services import default_cost_policy
 from part2_EndToEnd.agents.ticket_report_agent import generate_ticket_report
@@ -31,13 +29,6 @@ class GherkinRunRequest(BaseModel):
     execute: bool = True
     component_catalog: list[dict] = Field(default_factory=list)
     project_context: dict = Field(default_factory=dict)
-
-
-class Part1Request(BaseModel):
-    page_name: str = "page"
-    rows: list[dict] = Field(default_factory=list)
-    figma_image_base64: str = ""
-    web_image_base64: str = ""
 
 
 class ComponentOrganizationRequest(BaseModel):
@@ -105,28 +96,6 @@ async def get_artifact(artifact_path: str):
     if not path.exists() or not path.is_file():
         raise HTTPException(status_code=404, detail="Artifact not found")
     return FileResponse(path)
-
-
-@app.get("/api/v1/agents/part1/model/status")
-async def part1_model_status() -> dict:
-    return {
-        "status": "UP",
-        "modelVersion": "xgboost-3.2.0",
-        "featureCount": len(FEATURE_NAMES),
-        "componentClasses": MODEL_COMPONENTS,
-    }
-
-
-@app.post("/api/v1/agents/part1/run")
-async def run_part1(request: Part1Request) -> dict:
-    graph = build_part1_graph()
-    result = await graph.ainvoke(request.model_dump())
-    return {
-        "modelVersion": "xgboost-3.2.0",
-        "predictions": result.get("predictions", []),
-        "explanation": result.get("comparison_report"),
-        "error": result.get("error"),
-    }
 
 
 @app.post("/api/v1/agents/part1/organize-components")

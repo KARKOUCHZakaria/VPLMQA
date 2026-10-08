@@ -54,6 +54,8 @@ schemas.json
 endpoint_test_results.json
 tmp-*.json
 secrets/
+.deployment/
+front-end/.vm-nginx.conf
 
 # Large local archives and demo artifacts
 *.zip
